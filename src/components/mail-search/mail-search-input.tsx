@@ -12,7 +12,7 @@ export function MailSearchInput() {
 	const showShortcutHints = shortcutsEnabled && !shortcutsPreferenceLoading;
 
 	return (
-		<div className="group relative flex h-9 w-full max-w-xl items-center gap-2 rounded-xl bg-foreground/[0.045] px-3 text-muted-foreground ring-1 ring-transparent transition-[background-color,box-shadow] duration-200 hover:bg-foreground/[0.065] focus-within:bg-card focus-within:shadow-panel focus-within:ring-ring/25 dark:focus-within:bg-elevated">
+		<div className="group relative flex h-10 w-full max-w-xl items-center gap-2 rounded-full lg:h-9 lg:rounded-xl bg-foreground/[0.045] px-3 text-muted-foreground ring-1 ring-transparent transition-[background-color,box-shadow] duration-200 hover:bg-foreground/[0.065] focus-within:bg-card focus-within:shadow-panel focus-within:ring-ring/25 dark:focus-within:bg-elevated">
 			<Search className="size-4 shrink-0 transition-colors group-focus-within:text-foreground" />
 			<input
 				value={query}

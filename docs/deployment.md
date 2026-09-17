@@ -1,107 +1,91 @@
 # Deployment and configuration
 
-This guide covers Cloudflare deployment, runtime configuration, database backups, and application updates.
+This guide covers Cloudflare deployment, runtime configuration, and database backups.
+
+postbox deploys from this repository — either automatically on every push to `main` (GitHub Actions), or with the one-click Cloudflare button for the first install.
 
 ## Overview
 
-Set up Mailflare in three steps:
+1. **Provision and deploy** — the deploy provisions the D1 database, R2 bucket and queues, applies migrations, and deploys the Worker.
+2. **Add the runtime `CF_TOKEN`** — the API token postbox uses to manage your domains.
+3. **Complete setup** — open the deployed app and follow `/setup` to create the first admin account.
+4. **Connect your domains** — add each domain you receive mail for; routing is configured automatically.
 
-1. **Deploy the app:** use the Deploy to Cloudflare button, set the app name to `mailflare`, and provide the required `CF_TOKEN`.
-2. **Complete setup:** open the deployed app and follow `/setup` to check the installation and create the first admin account.
-3. **Connect your domain:** add a domain managed by the same Cloudflare account. Mailflare configures email routing and, when available and selected, email sending before helping you create the first mailbox.
+> The Worker name must remain `mailflare`. It is internal plumbing (email routing rules and the self-reference binding point at it by name) and does not affect the product name shown in the app.
 
-The Worker name must remain `mailflare`. Before starting, create the required `CF_TOKEN` with **Zone Read**, **Email Routing Edit**, and **Email Routing Rules Write** permissions for every domain you plan to connect. Add **Email Sending Edit** when Mailflare should send email; it is optional for receive-only domains.
+## Option A: Deploy on push (GitHub Actions)
 
-## Step 1: Deploy mailflare
+The repository ships a deploy workflow (`.github/workflows/deploy.yml`) that runs on every push to `main`.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/hieunc229/mailflare)
+Add these repository secrets (Settings → Secrets and variables → Actions):
 
-1. Click **Deploy to Cloudflare** above and sign in to Cloudflare if prompted.
-2. Choose the Cloudflare account that owns the domain you want to use.
-3. Set the app name to exactly `mailflare`. Do not rename it.
-4. Add `CF_TOKEN` when Cloudflare asks for the app's runtime variables or secrets.
-5. Start the deployment and wait for Cloudflare to finish provisioning and deploying the Worker.
+- `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with **Workers Scripts: Edit**, **D1: Edit**, **Workers R2 Storage: Edit** and **Queues: Edit**.
+- `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID (dashboard right sidebar).
 
-### Required configuration
+Then push to `main`. The first run creates the D1 database (`mailflare`), R2 bucket (`mailflare-raw`), and queues (`mailflare-inbound`, `mailflare-outbound`); later runs reuse them. Every run builds the app, applies pending D1 migrations, and deploys the Worker.
 
-Mailflare requires this runtime value:
+## Option B: One-click deploy
 
-- `CF_TOKEN` — a scoped Cloudflare API token with **Zone Read**, **Email Routing Edit**, and **Email Routing Rules Write** access for the domains you will connect. Add **Email Sending Edit** to enable outbound mail. This is separate from the token Cloudflare uses to deploy the app.
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/scuffi/postbox)
 
-Paste only the token secret into `CF_TOKEN`. Do not include the word `Bearer` and do not use the token ID. The token must belong to the same Cloudflare account as the domains you connect.
+1. Click the button and sign in to the Cloudflare account that owns your domains.
+2. Keep the app name as `mailflare`.
+3. Let Cloudflare finish provisioning and deploying.
 
-## Step 2: Complete mailflare setup
+If you use the button, Cloudflare's own git integration may also deploy on push — pick one deploy path and disable the other so two pipelines don't race.
 
-1. Open the URL of the deployed `mailflare` Worker.
-2. Go to `/setup` if Mailflare does not take you there automatically.
-3. Let Mailflare check the required Cloudflare configuration and initialize the empty D1 database.
-4. Create the first admin account when prompted.
+## Required runtime configuration
 
-The setup page initializes only a new, empty database. It never applies later migrations to an existing database.
+postbox needs one runtime value:
 
-## Step 3: Connect your primary domain and create an account
+- `CF_TOKEN` — a scoped Cloudflare API token, belonging to the same account as your domains, with:
+  - **Account:** DNS Settings: Edit, Email Routing Addresses: Edit — add **Email Sending: Edit** to send outbound mail.
+  - **Zone (all zones you will connect):** DNS Settings: Edit, Email Routing Rules: Edit, Zone Settings: Edit, DNS: Edit.
 
-1. Enter a domain that already uses Cloudflare DNS on the same account as `CF_TOKEN`.
-2. Continue while Mailflare enables Email Routing and configures the required routing and sending DNS.
-3. Choose the address for your first mailbox and finish setup.
-4. Open the inbox and send a test message to the new address.
+Set it as a Worker secret (it persists across deploys thanks to `keep_vars`):
 
-To connect more domains later, open **Admin → Domains**, select **New domain**, and enter the hostname. Mailflare configures Email Routing and Email Sending automatically.
+```bash
+npx wrangler secret put CF_TOKEN
+```
 
-Your inbox should be ready to send and receive emails
+…or in the dashboard under Worker → Settings → Variables and Secrets. Paste only the token value — no `Bearer` prefix, not the token ID.
 
----
+Optional Worker variables:
 
-## Manual deployment
+- `TURNSTILE_SECRET_KEY` (+ `NEXT_PUBLIC_TURNSTILE_SITE_KEY` at build time) — bot protection on the login and first-run forms.
 
-Install dependencies, configure the Cloudflare bindings in `wrangler.jsonc`, and run:
+## Complete setup
+
+1. Open the deployed Worker URL (`mailflare.<account>.workers.dev`).
+2. Go to `/setup` if you are not redirected there.
+3. Create the first admin account.
+
+The setup page initializes only a new, empty database; it never applies later migrations to an existing one.
+
+## Connect domains and mailboxes
+
+1. **Admin → Domains → New domain** — enter a hostname that already uses Cloudflare DNS on the same account. postbox enables Email Routing and, when selected, Email Sending automatically. Subdomains work too: add `outbound.example.com` and `donotreply@outbound.example.com` becomes a deliverable mailbox.
+2. **Admin → Mailboxes → New mailbox** — pick the domain, choose the local part. The routing rule is provisioned for you.
+
+Receiving works immediately. Sending requires the Workers paid plan.
+
+## Custom domain for the app
+
+Workers & Pages → your `mailflare` Worker → **Settings → Domains & Routes → Add custom domain**. The domain must be on Cloudflare DNS. This is the address you browse the app at and is independent of the email domains managed inside it.
+
+## Manual deploy
 
 ```bash
 npm install
-npm run deploy:local
+npm run deploy        # opennextjs-cloudflare build + remote D1 migrations + wrangler deploy
 ```
 
-The local deploy command builds the OpenNext application, applies pending D1 migrations, and uploads the complete Worker with Wrangler. The complete Worker is required because `worker.ts` also handles inbound email, queues, scheduled backups, and the real-time Durable Object.
-
-To migrate an existing remote D1 database before deploying, use:
+If you only need to migrate an existing remote database:
 
 ```bash
 npm run db:migrate:remote
 ```
 
-Remote migrations require the target account's `database_id` in your local `wrangler.jsonc`. Do not commit an account-specific database ID to a reusable repository.
-
 ## Database backups
 
-Mailflare exports its D1 records as JSON and stores the backup files in the configured R2 bucket. A cron trigger in `wrangler.jsonc` runs daily at 02:00 UTC and applies the schedule selected under **Admin → Backups**. Manual backups run the same record export directly from the admin API.
-
-Deploy the complete Worker with `npm run deploy` whenever the cron trigger is added or changed.
-
-After upgrading an existing installation and confirming the cron trigger is active, the old Workflow can be removed with `npx wrangler workflows delete mailflare-database-backup`. Deleting it also removes its historical Workflow instances; backup files in R2 and rows in Mailflare's backup history are unaffected.
-
-## Updating Mailflare
-
-The **Update Mailflare** button in the admin dashboard dispatches `.github/workflows/update.yml` in the installation repository. The workflow merges the latest upstream source, applies pending D1 migrations, and pushes the updated source. A connected Cloudflare Git integration can then build and deploy the change.
-
-Configure these Worker values:
-
-- `GITHUB_UPDATE_TOKEN` — a fine-grained GitHub token for the installation repository with Actions write permission.
-- `GITHUB_UPDATE_REPO` — the installation repository in `owner/repository` format.
-- `GITHUB_UPDATE_REF` — an optional update branch. The repository's default branch is used when omitted.
-
-Configure these GitHub Actions repository secrets:
-
-- `CLOUDFLARE_API_TOKEN` — a Cloudflare token allowed to read and migrate D1.
-- `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account ID.
-- `MAILFLARE_UPSTREAM_TOKEN` — required only when the upstream repository is private.
-
-Optional repository variables:
-
-- `MAILFLARE_UPSTREAM_REPOSITORY` — the upstream repository. Defaults to `hieunc229/mailflare`.
-- `MAILFLARE_UPSTREAM_BRANCH` — the upstream branch. Defaults to `main`.
-
-If an older installation contains a failing updater, copy the latest `.github/workflows/update.yml` into that installation once. An updater that cannot read upstream cannot update its own workflow.
-
-## Branding license
-
-Activate a purchased Pro or Team key from **Admin → Licenses**. Mailflare sends the key to Paymug and stores only a one-way hash and the activation state. Apply all D1 migrations before activating a license.
+postbox exports its D1 records as JSON and stores the backup files in the R2 bucket. A cron trigger runs daily at 02:00 UTC and applies the schedule selected under **Admin → Backups**. Manual backups run the same export from the admin API. Redeploy whenever the cron trigger changes.

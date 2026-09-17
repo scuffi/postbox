@@ -316,6 +316,28 @@
 		background: color-mix(in oklab, var(--primary) 22%, transparent);
 	}
 
+	/* Touch devices: no grey tap flash, no double-tap zoom delay, and fields at 16px so iOS doesn't zoom on focus. */
+	html {
+		-webkit-tap-highlight-color: transparent;
+		-webkit-text-size-adjust: 100%;
+	}
+
+	a,
+	button,
+	[role="button"],
+	label {
+		touch-action: manipulation;
+	}
+
+	@media (pointer: coarse) {
+		input:not([type="checkbox"], [type="radio"], [type="range"]),
+		textarea,
+		select,
+		[contenteditable="true"] {
+			font-size: max(16px, 1em);
+		}
+	}
+
 	h1,
 	h2,
 	h3 {

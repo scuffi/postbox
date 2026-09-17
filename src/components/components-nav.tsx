@@ -114,7 +114,7 @@ export function NavItem({ link, layoutGroup = "sidebar" }: { link: NavLink; layo
 				<Icon className="size-[17px]" strokeWidth={2.1} />
 				{!minimal && <span className="flex-1 text-left">{link.label}</span>}
 				{!minimal && (
-					<Kbd className="border-white/25 bg-white/15 text-white/85 shadow-none">C</Kbd>
+					<Kbd className="border-white/25 bg-white/15 text-white/85 shadow-none pointer-coarse:hidden">C</Kbd>
 				)}
 			</button>
 		);

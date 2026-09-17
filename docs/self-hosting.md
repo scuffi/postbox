@@ -1,6 +1,6 @@
-# Self-hosting Mailflare (Docker)
+# Self-hosting postbox (Docker)
 
-Mailflare can run as a single container on any host instead of Cloudflare
+postbox can run as a single container on any host instead of Cloudflare
 Workers. The same code serves both; the container provides its own database
 (SQLite on a volume), blob storage (files on the same volume), job queue,
 realtime WebSocket, backup schedule and an SMTP listener for inbound mail.
@@ -54,7 +54,7 @@ certificate on a private network.
 
 **Cloudflare Email Sending.** `CF_ACCOUNT_ID` plus a `CF_TOKEN` with Email
 Sending: Edit. The domain must be a Cloudflare zone with Email Sending set
-up; Mailflare calls the REST API, no Workers plan needed.
+up; postbox calls the REST API, no Workers plan needed.
 
 ## Cloudflare zone management (optional)
 
@@ -86,7 +86,7 @@ and the DNS page shows what to set by hand.
   unchanged; files land under `/data/blobs/backups`. Back up the whole volume
   for a full copy.
 - **Updates.** Pull the new image and recreate the container; migrations run
-  at start. The in-app update button is disabled on self-hosted installs.
+  at start.
 - **Logs.** `docker compose logs -f mailflare`.
 - **Queues.** Jobs are held in memory. Inbound mail is written to the volume
   before it is queued, so a restart never loses a message; at worst one

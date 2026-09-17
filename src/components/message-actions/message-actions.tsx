@@ -52,6 +52,7 @@ export function MessageActions({
 	message,
 	messageMeta,
 	bodyHtml,
+	variant = "toolbar",
 }: MessageActionsProps) {
 	const router = useRouter();
 	const { openDraftComposer } = useCompose();
@@ -233,6 +234,90 @@ export function MessageActions({
 	const markAction: BulkMessageAction = read ? "unread" : "read";
 	const moveActions = getMoveMessageActions(status, direction);
 
+	const moreMenuItems = (
+		<>
+			{variant === "bar" && (
+				<>
+					{canReplyAll && (
+						<DropdownMenuItem onSelect={() => void handleReply("replyAll")}>
+							<ReplyAll />
+							Reply all
+						</DropdownMenuItem>
+					)}
+					<DropdownMenuItem onSelect={() => void runAction(markAction)}>
+						{read ? <Mail /> : <MailOpen />}
+						{read ? "Mark as unread" : "Mark as read"}
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+				</>
+			)}
+			{direction === "inbound" && (
+				<>
+					<DropdownMenuItem disabled={!unsubscribeUrl && status === "trash"} onSelect={() => void onUnsubscribe()}>
+						<BellOff />
+						Unsubscribe
+					</DropdownMenuItem>
+					<DropdownMenuItem destructive onSelect={() => void onBlockContact()}>
+						<Ban />
+						Block contact
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+				</>
+			)}
+			<DropdownMenuLabel>Move to</DropdownMenuLabel>
+			{moveActions.map((item) => (
+				<DropdownMenuItem key={item.action} onSelect={() => void runAction(item.action)}>
+					{createElement(item.icon)}
+					{item.label}
+				</DropdownMenuItem>
+			))}
+		</>
+	);
+
+	if (variant === "bar") {
+		const barButton =
+			"flex h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl text-[10.5px] font-medium text-muted-foreground transition-[color,transform] active:scale-90 disabled:pointer-events-none disabled:opacity-35 [&_svg]:size-[21px]";
+		return (
+			<div className="border-t border-border bg-card/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150">
+				{error && <p className="truncate px-4 pt-2 text-center text-xs text-destructive">{error}</p>}
+				<div className="flex h-[62px] items-center gap-1 px-2">
+					<button type="button" className={barButton} disabled={disabled || status === "archived"} onClick={() => runAction("archive")}>
+						<Archive strokeWidth={1.8} />
+						Archive
+					</button>
+					<button type="button" className={barButton} disabled={disabled || status === "trash"} onClick={() => runAction("trash")}>
+						<Trash2 strokeWidth={1.8} />
+						Delete
+					</button>
+					<button
+						type="button"
+						className="mx-1 flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-b from-[color-mix(in_oklab,var(--primary)_88%,white)] to-primary text-primary-foreground shadow-button transition-transform active:scale-90 disabled:opacity-50"
+						aria-label="Reply"
+						disabled={disabled}
+						onClick={() => handleReply("reply")}
+					>
+						<Reply className="size-5" strokeWidth={2.2} />
+					</button>
+					<button type="button" className={barButton} disabled={disabled || !message || !messageMeta} onClick={() => void handleForward()}>
+						<Forward strokeWidth={1.8} />
+						Forward
+					</button>
+					<DropdownMenu open={moreOpen} onOpenChange={setMoreOpen}>
+						<DropdownMenuTrigger asChild>
+							<button type="button" className={barButton} disabled={disabled}>
+								<MoreHorizontal strokeWidth={1.8} />
+								More
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent side="top" align="end" className="w-60">
+							{moreMenuItems}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex items-center gap-1 text-muted-foreground">
 			{error && <span className="mr-2 max-w-48 truncate text-xs text-destructive" title={error}>{error}</span>}
@@ -290,26 +375,7 @@ export function MessageActions({
 					</DropdownMenuTrigger>
 				</Tooltip>
 				<DropdownMenuContent align="end" className="w-56">
-					{direction === "inbound" && (
-						<>
-							<DropdownMenuItem disabled={!unsubscribeUrl && status === "trash"} onSelect={() => void onUnsubscribe()}>
-								<BellOff />
-								Unsubscribe
-							</DropdownMenuItem>
-							<DropdownMenuItem destructive onSelect={() => void onBlockContact()}>
-								<Ban />
-								Block contact
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-						</>
-					)}
-					<DropdownMenuLabel>Move to</DropdownMenuLabel>
-					{moveActions.map((item) => (
-						<DropdownMenuItem key={item.action} onSelect={() => void runAction(item.action)}>
-							{createElement(item.icon)}
-							{item.label}
-						</DropdownMenuItem>
-					))}
+					{moreMenuItems}
 				</DropdownMenuContent>
 			</DropdownMenu>
 		</div>

@@ -67,10 +67,12 @@ export function AccountAvatar({
  * Account menu pinned to the foot of the sidebar. Mailbox selection lives in the
  * domain rail, so this is the signed-in user's profile plus app-level actions.
  */
-export function MailboxSelector() {
+export function MailboxSelector({ variant = "sidebar", className }: { variant?: "sidebar" | "avatar"; className?: string }) {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { minimal } = useSidebar();
+	const { minimal: sidebarMinimal } = useSidebar();
+	const avatarOnly = variant === "avatar";
+	const minimal = sidebarMinimal && !avatarOnly;
 	const { openHelpModal, shortcutsEnabled, shortcutsPreferenceLoading } = useShortcuts();
 	const [user, setUser] = useState<MailboxSelectorUser | null>(null);
 	const [hasAvatar, setHasAvatar] = useState(false);
@@ -124,13 +126,18 @@ export function MailboxSelector() {
 				<button
 					type="button"
 					className={cn(
-						"group flex w-full items-center gap-2.5 rounded-xl text-left outline-none transition-colors hover:bg-foreground/[0.04] data-[state=open]:bg-foreground/[0.05]",
-						minimal ? "mx-auto size-10 justify-center" : "h-11 px-2",
+						"group flex items-center gap-2.5 rounded-xl text-left outline-none transition-colors hover:bg-foreground/[0.04] data-[state=open]:bg-foreground/[0.05]",
+						avatarOnly
+							? "size-10 shrink-0 justify-center rounded-full active:scale-95"
+							: minimal
+								? "mx-auto size-10 w-full justify-center"
+								: "h-11 w-full px-2",
+						className,
 					)}
 					aria-label="Open account menu"
 				>
 					<AccountAvatar name={name} hasAvatar={hasAvatar} avatarUrl={avatarUrl} onAvatarError={() => setHasAvatar(false)} />
-					{!minimal && (
+					{!minimal && !avatarOnly && (
 						<>
 							<span className="min-w-0 flex-1 leading-tight">
 								<span className="block truncate text-[13px] font-medium text-foreground">{name}</span>
@@ -141,7 +148,11 @@ export function MailboxSelector() {
 					)}
 				</button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent side={minimal ? "right" : "top"} align={minimal ? "end" : "start"} className="w-[264px]">
+			<DropdownMenuContent
+				side={avatarOnly ? "bottom" : minimal ? "right" : "top"}
+				align={avatarOnly || minimal ? "end" : "start"}
+				className="w-[264px]"
+			>
 				<div className="flex items-center gap-3 px-2 pb-2.5 pt-2">
 					<AccountAvatar name={name} hasAvatar={hasAvatar} avatarUrl={avatarUrl} size="large" onAvatarError={() => setHasAvatar(false)} />
 					<div className="min-w-0 flex-1">
@@ -179,7 +190,7 @@ export function MailboxSelector() {
 					</DropdownMenuItem>
 				)}
 				{shortcutsEnabled && !shortcutsPreferenceLoading && (
-					<DropdownMenuItem onSelect={() => openHelpModal()} shortcut="?">
+					<DropdownMenuItem onSelect={() => openHelpModal()} shortcut="?" className="pointer-coarse:hidden">
 						<Keyboard />
 						Keyboard shortcuts
 					</DropdownMenuItem>

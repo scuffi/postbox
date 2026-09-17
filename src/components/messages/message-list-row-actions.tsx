@@ -38,7 +38,7 @@ export function MessageListRowActions({ message, onAction }: MessageListRowActio
 
 	return (
 		<>
-			<div className="pointer-events-none absolute right-2.5 top-1/2 z-10 flex -translate-y-1/2 translate-x-1 items-center gap-0.5 rounded-xl bg-popover p-0.5 opacity-0 shadow-[0_0_0_1px_var(--border),0_4px_12px_-2px_rgb(0_0_0/0.12)] transition-[opacity,transform] duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100">
+			<div className="pointer-events-none absolute right-2.5 top-1/2 z-10 flex pointer-coarse:hidden -translate-y-1/2 translate-x-1 items-center gap-0.5 rounded-xl bg-popover p-0.5 opacity-0 shadow-[0_0_0_1px_var(--border),0_4px_12px_-2px_rgb(0_0_0/0.12)] transition-[opacity,transform] duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100">
 				<Tooltip label="Archive" shortcut="E">
 					<button type="button" className={actionButton} onClick={() => void onAction("archive")} aria-label="Archive">
 						<Archive />

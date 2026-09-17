@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
-import { Archive, ChevronLeft, ChevronRight, Clock, FolderOpen, Inbox, ListFilter, PenLine, SearchX, Send, ShieldCheck, Star, Trash2 } from "lucide-react";
+import { Archive, ChevronLeft, ChevronRight, Clock, FolderOpen, Inbox, ListFilter, Mail, MailOpen, PenLine, SearchX, Send, ShieldCheck, Star, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ContactAvatar } from "@/components/contacts/contact-avatar";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -24,11 +24,13 @@ import type { Message } from "@/hooks/types";
 import { setMessageDragData } from "@/lib/messages/drag-utils";
 import { BulkMessageToolbar } from "./bulk-message-toolbar";
 import { MessageListRowActions } from "./message-list-row-actions";
+import { SwipeableRow } from "./swipeable-row";
+import type { SwipeAction } from "./swipeable-row-types";
 import { dispatchMessageCountsDelta, toggleMessageStar } from "./message-list-row-actions-utils";
 import { domainColor } from "@/lib/domain-color";
 import { MessageNavigationProgress, useMessageNavigation } from "./message-navigation";
 import { useConversationView } from "./use-conversation-view";
-import type { MessageFolderPageProps, MessageListRowProps } from "./types";
+import type { MessageFolderPageProps, MessageListRowProps, RowMessageAction } from "./types";
 import {
 	formatMessageListTimestamp,
 	getPageRange,
@@ -178,8 +180,38 @@ function MessageListRow({
 		);
 	}
 
+	async function handleRowAction(action: RowMessageAction) {
+		const previousRead = read;
+		const unreadDelta = action === "read" ? -1 : action === "unread" ? 1 : 0;
+		if (action === "read") setRead(true);
+		if (action === "unread") setRead(false);
+		if (unreadDelta) dispatchMessageCountsDelta({ inboxUnreadDelta: unreadDelta });
+		try {
+			await onMessageAction(message.id, action);
+		} catch (error) {
+			if (action === "read" || action === "unread") {
+				setRead(previousRead);
+				if (unreadDelta) dispatchMessageCountsDelta({ inboxUnreadDelta: -unreadDelta });
+			}
+			throw error;
+		}
+	}
+
+	// Touch gestures: swipe right toggles read, swipe left archives (or deletes where archiving makes no sense).
+	const swipeLeading: SwipeAction | undefined = message.direction === "inbound"
+		? unread
+			? { label: "Read", icon: MailOpen, className: "bg-sky-600", onTrigger: () => handleRowAction("read").catch(() => undefined) }
+			: { label: "Unread", icon: Mail, className: "bg-sky-600", onTrigger: () => handleRowAction("unread").catch(() => undefined) }
+		: undefined;
+	const swipeTrailing: SwipeAction | undefined =
+		config.folder === "trash"
+			? undefined
+			: config.folder === "archived" || config.folder === "sent" || config.folder === "spam"
+				? { label: "Delete", icon: Trash2, className: "bg-destructive", dismiss: true, onTrigger: () => handleRowAction("trash").catch(() => undefined) }
+				: { label: "Archive", icon: Archive, className: "bg-emerald-600", dismiss: true, onTrigger: () => handleRowAction("archive").catch(() => undefined) };
+
 	const className = clsx(
-		"group relative mx-2 flex min-h-[52px] items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-150 sm:h-[52px] sm:py-0",
+		"group relative flex min-h-[64px] items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-150 sm:h-[52px] sm:min-h-[52px] sm:py-0",
 		active || selected ? "bg-primary-soft/60 dark:bg-primary-soft/50" : "hover:bg-foreground/[0.03]",
 		draggable && "cursor-grab active:cursor-grabbing",
 	);
@@ -213,7 +245,7 @@ function MessageListRow({
 							aria-label={starred ? "Starred" : "Not starred"}
 							className={clsx(
 								"flex size-7 items-center justify-center rounded-lg transition-[opacity,background-color] hover:bg-gold-soft",
-								starred ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+								starred ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-coarse:hidden",
 							)}
 						>
 							<motion.span key={String(starred)} initial={{ scale: 0.4, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 600, damping: 15 }} className="flex">
@@ -229,7 +261,7 @@ function MessageListRow({
 					dateTime={message.createdAt}
 					className={clsx(
 						"min-w-[64px] whitespace-nowrap text-right text-[12px] tabular-nums transition-opacity",
-						(config.folder === "inbox" || config.folder === "snoozed") && message.direction === "inbound" && "group-hover:opacity-0",
+						(config.folder === "inbox" || config.folder === "snoozed") && message.direction === "inbound" && "pointer-fine:group-hover:opacity-0",
 						unread ? "font-medium text-primary" : "text-subtle-foreground",
 					)}
 				>
@@ -241,7 +273,7 @@ function MessageListRow({
 
 	if (config.folder === "drafts") {
 		return (
-			<div className={className}>
+			<div className={clsx(className, "mx-2")}>
 				{lead}
 				<button type="button" className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 text-left outline-none sm:flex" onClick={() => openDraftComposer(message.id)}>
 					{content}
@@ -251,41 +283,25 @@ function MessageListRow({
 	}
 
 	return (
-		<div
-			className={className}
-			draggable={draggable}
-			onDragStart={(event) => {
-				if (!draggable) return;
-				setMessageDragData(event.dataTransfer, { messageIds: dragMessageIds });
-			}}
-		>
-			<MessageNavigationProgress progress={navigation.progress} />
-			{lead}
-			<Link href={href} onClick={onMessageNavigate} className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] content-center items-center gap-x-3 self-stretch outline-none sm:flex">
-				{content}
-			</Link>
-			{(config.folder === "inbox" || config.folder === "snoozed") && message.direction === "inbound" && (
-				<MessageListRowActions
-					message={rowMessage}
-					onAction={async (action) => {
-						const previousRead = read;
-						const unreadDelta = action === "read" ? -1 : action === "unread" ? 1 : 0;
-						if (action === "read") setRead(true);
-						if (action === "unread") setRead(false);
-						if (unreadDelta) dispatchMessageCountsDelta({ inboxUnreadDelta: unreadDelta });
-						try {
-							await onMessageAction(message.id, action);
-						} catch (error) {
-							if (action === "read" || action === "unread") {
-								setRead(previousRead);
-								if (unreadDelta) dispatchMessageCountsDelta({ inboxUnreadDelta: -unreadDelta });
-							}
-							throw error;
-						}
-					}}
-				/>
-			)}
-		</div>
+		<SwipeableRow className="mx-2 rounded-xl" leading={swipeLeading} trailing={swipeTrailing}>
+			<div
+				className={className}
+				draggable={draggable}
+				onDragStart={(event) => {
+					if (!draggable) return;
+					setMessageDragData(event.dataTransfer, { messageIds: dragMessageIds });
+				}}
+			>
+				<MessageNavigationProgress progress={navigation.progress} />
+				{lead}
+				<Link href={href} onClick={onMessageNavigate} className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] content-center items-center gap-x-3 self-stretch outline-none sm:flex">
+					{content}
+				</Link>
+				{(config.folder === "inbox" || config.folder === "snoozed") && message.direction === "inbound" && (
+					<MessageListRowActions message={rowMessage} onAction={handleRowAction} />
+				)}
+			</div>
+		</SwipeableRow>
 	);
 }
 

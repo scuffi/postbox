@@ -1,37 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { Command, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { MailSearchInput } from "@/components/mail-search/mail-search-input";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useShortcuts } from "@/components/shortcuts";
+import { MailboxSelector } from "@/components/mailbox-selector";
 
 const iconButton =
 	"flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 
-/** Bar sitting on the canvas above the content panel on mail and settings screens. */
+/**
+ * Bar sitting on the canvas above the content panel on mail and settings screens.
+ * On phones it is just search and the account avatar; theme and settings live in that menu.
+ */
 export function AppTopbar() {
-	const { openCommandPalette, shortcutsEnabled, shortcutsPreferenceLoading } = useShortcuts();
-
 	return (
 		<>
 			<MailSearchInput />
-			<span className="flex-1" />
+			<span className="hidden flex-1 lg:block" />
 			<div className="flex items-center gap-0.5">
-				{shortcutsEnabled && !shortcutsPreferenceLoading && (
-					<Tooltip label="Command palette" shortcut="⌘K">
-						<button type="button" onClick={openCommandPalette} className={`${iconButton} md:hidden`} aria-label="Open command palette">
-							<Command className="size-4" />
-						</button>
-					</Tooltip>
-				)}
-				<ThemeToggle />
+				<ThemeToggle className="max-lg:hidden" />
 				<Tooltip label="Settings">
-					<Link href="/settings/account" className={iconButton} aria-label="Settings">
+					<Link href="/settings/account" className={`${iconButton} max-lg:hidden`} aria-label="Settings">
 						<Settings className="size-4" />
 					</Link>
 				</Tooltip>
+				<MailboxSelector variant="avatar" className="ml-1 lg:hidden" />
 			</div>
 		</>
 	);

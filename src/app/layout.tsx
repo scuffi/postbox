@@ -23,10 +23,12 @@ const displaySerif = Instrument_Serif({
 export const metadata: Metadata = {
 	title: "postbox",
 	description: "Self-hosted email for every domain you own",
-	icons: { icon: "/api/branding/icon" },
+	icons: { icon: "/api/branding/icon", apple: "/api/branding/icon" },
+	appleWebApp: { capable: true, title: "postbox", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
+	viewportFit: "cover",
 	themeColor: [
 		{ media: "(prefers-color-scheme: light)", color: "#f3f1ee" },
 		{ media: "(prefers-color-scheme: dark)", color: "#0c0a09" },

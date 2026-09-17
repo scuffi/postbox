@@ -8,23 +8,31 @@ import { cn } from "@/lib/utils";
 import { useHotkeys, useShortcuts } from "./shortcuts";
 import { ExpandedSidebarScope, useSidebar } from "./sidebar-state";
 import { useMemo } from "react";
+import { usePathname } from "next/navigation";
+import { MailboxSelector } from "./mailbox-selector";
+import { isMessageDetailPath } from "./mobile-tab-bar-utils";
 
 /**
  * The postbox frame: a tinted canvas holding the sidebar, with page content in
- * a single raised panel. Below `lg` the sidebar moves into a slide-over drawer.
+ * a single raised panel. Below `lg` the sidebar moves into a slide-over drawer,
+ * opened from the bottom tab bar when one is given (or a menu button otherwise).
  */
 export function AppShell({
 	sidebar,
 	topbar,
+	tabBar,
 	children,
 	mainClassName,
 }: {
 	sidebar: ReactNode;
 	topbar?: ReactNode;
+	tabBar?: ReactNode;
 	children: ReactNode;
 	mainClassName?: string;
 }) {
 	const { mobileOpen, setMobileOpen, toggle } = useSidebar();
+	// On phones a message opens full screen, with its own back button and action bar.
+	const reading = isMessageDetailPath(usePathname());
 	const { shortcutsEnabled, shortcutsPreferenceLoading } = useShortcuts();
 	const sidebarShortcuts = useMemo(
 		() => [{ key: "[", label: "Toggle Sidebar", category: "Navigation" as const, action: toggle }],
@@ -43,7 +51,7 @@ export function AppShell({
 					<DialogPrimitive.Overlay className="anim-overlay fixed inset-0 z-50 bg-stone-950/30 backdrop-blur-[2px] lg:hidden" />
 					<DialogPrimitive.Content
 						aria-describedby={undefined}
-						className="fixed inset-y-0 left-0 z-50 flex w-[min(300px,86vw)] flex-col bg-canvas shadow-float outline-none transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] data-[state=closed]:animate-[overlay-out_0.15s_ease-in] data-[state=open]:animate-[drawer-in_0.35s_cubic-bezier(0.16,1,0.3,1)] lg:hidden"
+						className="fixed inset-y-0 left-0 z-50 flex w-[min(300px,86vw)] flex-col bg-canvas pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-float outline-none transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] data-[state=closed]:animate-[overlay-out_0.15s_ease-in] data-[state=open]:animate-[drawer-in_0.35s_cubic-bezier(0.16,1,0.3,1)] lg:hidden"
 					>
 						<DialogPrimitive.Title className="sr-only">Navigation</DialogPrimitive.Title>
 						<ExpandedSidebarScope>{sidebar}</ExpandedSidebarScope>
@@ -51,17 +59,25 @@ export function AppShell({
 				</DialogPrimitive.Portal>
 			</DialogPrimitive.Root>
 
-			<div className="flex min-w-0 flex-1 flex-col lg:py-2 lg:pr-2">
-				<div className={cn("flex h-13 shrink-0 items-center gap-2 px-3 lg:h-12 lg:pl-1 lg:pr-1", !topbar && "lg:hidden")}>
-					<button
-						type="button"
-						onClick={() => setMobileOpen(true)}
-						className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
-						aria-label="Open navigation"
-					>
-						<Menu className="size-[18px]" />
-					</button>
-					{topbar ?? <BrandLockup className="lg:hidden" />}
+			<div className="flex min-w-0 flex-1 flex-col pt-[env(safe-area-inset-top)] lg:py-2 lg:pr-2">
+				<div className={cn("flex h-14 shrink-0 items-center gap-2 px-3 lg:h-12 lg:pl-1 lg:pr-1", !topbar && "lg:hidden", reading && "max-lg:hidden")}>
+					{!tabBar && (
+						<button
+							type="button"
+							onClick={() => setMobileOpen(true)}
+							className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+							aria-label="Open navigation"
+						>
+							<Menu className="size-[18px]" />
+						</button>
+					)}
+					{topbar ?? (
+						<>
+							<BrandLockup className="lg:hidden" />
+							<span className="flex-1" />
+							<MailboxSelector variant="avatar" className="lg:hidden" />
+						</>
+					)}
 				</div>
 				<main
 					className={cn(
@@ -71,6 +87,7 @@ export function AppShell({
 				>
 					{children}
 				</main>
+				{tabBar}
 			</div>
 		</div>
 	);

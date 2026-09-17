@@ -8,6 +8,7 @@ import { FloatingComposer } from "@/components/compose/floating-composer";
 import { MailSearchProvider } from "@/components/mail-search/mail-search-context";
 import { MailboxProvider } from "@/components/mailbox-provider";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { MailTabBar } from "@/components/mobile-tab-bar";
 import { SidebarProvider } from "@/components/sidebar-state";
 import { ShortcutsProvider } from "@/components/shortcuts";
 
@@ -19,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 					<ComposeProvider>
 						<MailSearchProvider>
 							<ShortcutsProvider>
-								<AppShell sidebar={<DashboardNav />} topbar={<AppTopbar />}>
+								<AppShell sidebar={<DashboardNav />} topbar={<AppTopbar />} tabBar={<MailTabBar />}>
 									{children}
 								</AppShell>
 								<FloatingComposer />

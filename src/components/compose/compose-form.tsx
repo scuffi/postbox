@@ -394,7 +394,7 @@ export function ComposeForm({
 				"flex flex-col overflow-hidden bg-popover shadow-float transition-[width,height,border-radius] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:rounded-2xl",
 				minimized
 					? "h-12 w-[min(340px,100vw)] rounded-t-2xl"
-					: "h-[min(640px,100dvh)] w-full rounded-t-2xl sm:h-[min(600px,calc(100dvh-88px))] sm:w-[min(620px,calc(100vw-32px))]",
+					: "h-dvh w-full pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] max-sm:rounded-none sm:h-[min(600px,calc(100dvh-88px))] sm:w-[min(620px,calc(100vw-32px))] sm:rounded-2xl sm:p-0",
 			)
 			: "flex h-full min-h-[680px] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-panel";
 
@@ -440,7 +440,7 @@ export function ComposeForm({
 									event.stopPropagation();
 									setMinimized((value) => !value);
 								}}
-								className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								className="hidden size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:flex"
 								aria-label={minimized ? "Expand composer" : "Minimise composer"}
 							>
 								{minimized ? <Maximize2 className="size-3.5" /> : <Minus className="size-4" />}

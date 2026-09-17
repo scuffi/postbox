@@ -20,6 +20,8 @@ export type MessageActionsProps = {
 	/** Needed by Forward, which quotes the original header block. */
 	messageMeta?: Pick<Message, "id" | "subject" | "createdAt">;
 	bodyHtml?: string | null;
+	/** `toolbar` is the desktop header strip; `bar` is the phone's bottom action bar. */
+	variant?: "toolbar" | "bar";
 };
 
 export type ForwardDraftInput = {

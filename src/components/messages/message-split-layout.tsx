@@ -21,7 +21,7 @@ export function MessageSplitLayout({
 	if (!selectedMessageId) return children;
 
 	return (
-		<div className="h-full min-h-0 overflow-hidden lg:grid lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
+		<div className="flex h-full min-h-0 flex-col overflow-hidden lg:grid lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
 			<aside className="hidden min-h-0 overflow-hidden border-r border-border bg-elevated/40 lg:block">
 				<MessageFolderPage
 					config={config}
@@ -30,7 +30,7 @@ export function MessageSplitLayout({
 					selection={{ selectedMessages, setSelectedMessages }}
 				/>
 			</aside>
-			<section className="min-h-0 min-w-0 overflow-hidden bg-card">
+			<section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-card">
 				<AnimatePresence mode="wait" initial={false}>
 					<motion.div
 						key={selectedMessages.length > 0 ? "bulk" : selectedMessageId}
