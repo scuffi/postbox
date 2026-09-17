@@ -6,6 +6,7 @@ import type { MouseEvent } from "react";
 import { primeMessageDetail } from "@/lib/messages/detail-cache";
 import type { Message } from "@/hooks/types";
 import type { MessageNavigationState } from "./message-navigation-types";
+import { NavigationProgressBar } from "@/components/components-nav";
 
 export function useMessageNavigation(href: string, message: Message): MessageNavigationState {
 	const pathname = usePathname();
@@ -35,10 +36,5 @@ export function useMessageNavigation(href: string, message: Message): MessageNav
 }
 
 export function MessageNavigationProgress({ progress }: { progress: number | null }) {
-	if (progress === null) return null;
-	return (
-		<div className="fixed inset-x-0 top-0 z-[120] h-1 bg-blue-100">
-			<div className="h-full bg-blue-600 transition-[width] duration-100 ease-out" style={{ width: `${progress}%` }} />
-		</div>
-	);
+	return <NavigationProgressBar progress={progress} />;
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, LoaderCircle, MailPlus, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleAlert, LoaderCircle, MailPlus, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
@@ -162,12 +162,12 @@ export function RegisterClient() {
         }
       >
         <div className="space-y-5">
-          <p className="text-sm leading-6 text-neutral-600">
+          <p className="text-sm leading-6 text-muted-foreground">
             This installation already has an account for {primaryDomain ?? "this workspace"}.
           </p>
           <Button
             type="button"
-            className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+            size="lg" className="w-full"
             onClick={() => router.push("/login")}
           >
             Go to login
@@ -196,45 +196,47 @@ export function RegisterClient() {
     >
       {step === 1 ? (
         <div className="space-y-5">
-          <p className="text-sm leading-6 text-neutral-600">
-            Mailflare checks its required Cloudflare configuration and initializes a clean D1 database before setup continues.
+          <p className="text-sm leading-6 text-muted-foreground">
+            postbox checks its required configuration and initializes a clean database before setup continues.
           </p>
           <div className="space-y-2">
             {loading && checks.length === 0 && (
-              <div className="flex items-center gap-3 rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+              <div className="flex items-center gap-3 rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">
                 <LoaderCircle className="h-4 w-4 animate-spin" />
                 Checking installation
               </div>
             )}
             {checks.map((check) => (
-              <div key={check.key} className="flex items-start gap-3 rounded-2xl bg-neutral-50 px-4 py-3">
+              <div key={check.key} className="flex items-start gap-3 rounded-2xl bg-muted px-4 py-3">
                 {check.configured ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : check.required === false ? (
+                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                 ) : (
-                  <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 )}
                 <div>
-                  <p className="text-sm font-medium text-neutral-800">{check.key}</p>
-                  {!check.configured && <p className="mt-1 text-xs leading-5 text-neutral-500">{check.message}</p>}
+                  <p className="text-sm font-medium text-foreground">{check.key}</p>
+                  {!check.configured && <p className="mt-1 text-xs leading-5 text-muted-foreground">{check.message}</p>}
                 </div>
               </div>
             ))}
             {preparationComplete && (
-              <div className="flex items-center gap-3 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
+              <div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
                 <CheckCircle2 className="h-4 w-4" />
                 {databaseMigrated ? "Clean database migrated successfully" : "Database schema is ready"}
               </div>
             )}
           </div>
           {error && (
-            <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium ring-1 ring-inset ring-red-500/20 text-red-700 dark:text-red-400">
               {error}
             </p>
           )}
           {preparationComplete ? (
             <Button
               type="button"
-              className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+              size="lg" className="w-full"
               onClick={() => setStep(hasPrimaryDomain ? 3 : 2)}
             >
               Continue
@@ -243,11 +245,11 @@ export function RegisterClient() {
             <Button
               type="button"
               variant="outline"
-              className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+              size="lg" className="w-full"
               disabled={loading}
               onClick={() => void runPreparation()}
             >
-              {loading ? "Checking..." : "Check again"}
+              {loading ? "Checking…" : "Check again"}
             </Button>
           )}
         </div>
@@ -269,14 +271,14 @@ export function RegisterClient() {
                 }
               }}
             />
-            <p className="text-xs leading-5 text-neutral-500">
+            <p className="text-xs leading-5 text-muted-foreground">
               The domain must already be a Cloudflare zone on this account.
             </p>
           </div>
-          <div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-4 rounded-2xl bg-muted px-4 py-3">
             <div>
               <Label htmlFor="setup-enable-sending">Enable sending</Label>
-              <p className="mt-1 text-xs leading-5 text-neutral-500">
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 {domainChecking
                   ? "Checking Cloudflare access..."
                   : domainCheck
@@ -294,22 +296,22 @@ export function RegisterClient() {
             />
           </div>
           {domainCheck && (
-            <div className="flex items-center gap-3 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
+            <div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
               <CheckCircle2 className="h-4 w-4" />
               Domain found in Cloudflare as {domainCheck.zone.name}
             </div>
           )}
           {error && (
-            <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium ring-1 ring-inset ring-red-500/20 text-red-700 dark:text-red-400">
               {error}
             </p>
           )}
           <Button
             type="submit"
-            className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+            size="lg" className="w-full"
             disabled={loading || domainChecking}
           >
-            {loading ? "Adding domain..." : "Continue"}
+            {loading ? "Adding domain…" : "Continue"}
           </Button>
         </form>
       ) : (
@@ -325,7 +327,7 @@ export function RegisterClient() {
                 required
 								className="pr-34"
               />
-              <span className="max-w-36 truncate text-sm font-medium text-neutral-500 absolute top-2.5 right-5">
+              <span className="max-w-36 truncate text-sm font-medium text-muted-foreground absolute top-2.5 right-5">
                 @{accountDomain ?? "domain"}
               </span>
             </div>
@@ -351,11 +353,11 @@ export function RegisterClient() {
               placeholder="you@gmail.com"
               required
             />
-            {/* <p className="text-xs leading-5 text-neutral-500">Used later for password reset.</p> */}
+            {/* <p className="text-xs leading-5 text-muted-foreground">Used later for password reset.</p> */}
           </div>
 
           {error && (
-            <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium ring-1 ring-inset ring-red-500/20 text-red-700 dark:text-red-400">
               {error}
             </p>
           )}
@@ -365,7 +367,7 @@ export function RegisterClient() {
             className="h-11 w-full rounded-full px-6 active:scale-[0.98] mt-8"
             disabled={loading || hasAdminAccount === null || hasPrimaryDomain === null}
           >
-            {loading ? "Creating..." : "Create account"}
+            {loading ? "Creating…" : "Create account"}
           </Button>
         </form>
       )}

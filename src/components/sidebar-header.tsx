@@ -1,20 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { Menu } from "lucide-react";
-import { useBranding } from "./branding-provider";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { BrandLockup, BrandMark } from "@/components/brand/postbox-mark";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useSidebar } from "./sidebar-state";
 import type { SidebarHeaderProps } from "./sidebar-state-types";
 
 export function SidebarHeader({ href, label }: SidebarHeaderProps) {
-	const branding = useBranding();
-	const { minimal, toggle } = useSidebar();
+	const { minimal, toggle, mobileOpen } = useSidebar();
+
+	if (minimal) {
+		return (
+			<Tooltip label="Expand sidebar" side="right" shortcut="[">
+				<button
+					type="button"
+					onClick={toggle}
+					className="group relative mx-auto flex size-10 items-center justify-center rounded-xl transition-colors hover:bg-accent"
+					aria-label="Expand menu"
+				>
+					<BrandMark className="transition-opacity group-hover:opacity-0" />
+					<PanelLeftOpen className="absolute size-[18px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+				</button>
+			</Tooltip>
+		);
+	}
+
 	return (
-		<div className={`mb-3 flex h-10 items-center ${minimal ? "justify-center" : "gap-2 px-1"}`}>
-			<button type="button" onClick={toggle} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200" aria-label={minimal ? "Expand menu" : "Collapse menu"}>
-				{minimal ? <img src={branding.iconUrl} height={28} width={28} alt="" /> : <Menu className="h-5 w-5" />}
-			</button>
-			{!minimal && <Link href={href} className="flex min-w-0 items-center gap-3"><img src={branding.iconUrl} height={28} width={28} alt="" /><span className="truncate text-lg font-semibold text-neutral-800">{label ?? branding.appName}</span></Link>}
+		<div className="flex h-10 items-center justify-between gap-2 pl-1.5">
+			<Link href={href} className="min-w-0 rounded-lg py-1 pr-2 transition-opacity hover:opacity-80">
+				<BrandLockup label={label} />
+			</Link>
+			{!mobileOpen && (
+				<Tooltip label="Collapse sidebar" side="right" shortcut="[">
+					<button
+						type="button"
+						onClick={toggle}
+						className="flex size-8 items-center justify-center rounded-lg text-subtle-foreground transition-colors hover:bg-accent hover:text-foreground"
+						aria-label="Collapse menu"
+					>
+						<PanelLeftClose className="size-[17px]" />
+					</button>
+				</Tooltip>
+			)}
 		</div>
 	);
 }

@@ -117,11 +117,11 @@ export default function MailboxSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="truncate text-3xl font-medium text-neutral-900">
+          <h1 className="truncate font-display text-[40px] leading-[1.05] text-foreground">
             Settings
           </h1>
           {address ? (
-            <p className="mt-1 truncate no-font-mono text-sm text-neutral-500">
+            <p className="mt-1 truncate no-font-mono text-sm text-muted-foreground">
               {address}
             </p>
           ) : (
@@ -139,18 +139,18 @@ export default function MailboxSettingsPage() {
       </div>
 
       {mailbox.isError && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
           {mailbox.error instanceof Error
             ? mailbox.error.message
             : "Failed to load mailbox"}
         </p>
       )}
 
-      <Card className="rounded-3xl border-0 bg-white p-6">
-        <CardHeader className="py-0">
+      <Card>
+        <CardHeader>
           <CardTitle>Account</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 pt-5">
+        <CardContent className="space-y-4">
           {mailbox.data ? (
             <MailboxAvatarForm
               mailboxId={mailbox.data.id}
@@ -171,28 +171,28 @@ export default function MailboxSettingsPage() {
               disabled={mailbox.isLoading || updateName.isPending}
             />
           </div>
-          <label className="flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
+          <label className="flex items-start gap-3 rounded-xl bg-muted p-4">
             <Checkbox
               checked={useAllDomains}
               onChange={(event) => setUseAllDomains(event.target.checked)}
               disabled={mailbox.isLoading || updateName.isPending}
             />
             <span>
-              <span className="block text-sm font-medium text-neutral-900">Use all domains</span>
-              <span className="mt-1 block text-sm text-neutral-500">
+              <span className="block text-sm font-medium text-foreground">Use all domains</span>
+              <span className="mt-1 block text-sm text-muted-foreground">
                 Receive and send mail as this username on every active domain in this admin account.
               </span>
             </span>
           </label>
           {updateName.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-destructive">
               {updateName.error instanceof Error
                 ? updateName.error.message
                 : "Failed to update mailbox"}
             </p>
           )}
           {updateName.isSuccess && (
-            <p className="text-sm text-green-700">Mailbox settings saved</p>
+            <p className="text-sm text-emerald-700 dark:text-emerald-400">Mailbox settings saved</p>
           )}
           <Button
             onClick={() => updateName.mutate()}
@@ -204,24 +204,24 @@ export default function MailboxSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl border-0 bg-white p-6">
-        <CardHeader className="py-0">
+      <Card>
+        <CardHeader>
           <CardTitle>Aliases</CardTitle>
           <CardDescription>
             Extra addresses that deliver to this mailbox. You can also send mail
             from any alias.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pt-5">
+        <CardContent className="space-y-4">
           {aliases.isLoading && <Skeleton className="h-12 w-full rounded-2xl" />}
           {(aliases.data?.aliases ?? []).map((alias) => (
             <div
               key={alias.id}
-              className="flex items-center justify-between gap-3 rounded-2xl bg-neutral-50 px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-2xl bg-muted px-4 py-3"
             >
               <div className="flex min-w-0 items-center gap-2">
-                <AtSign className="h-4 w-4 shrink-0 text-neutral-400" />
-                <p className="truncate no-font-mono text-sm font-medium text-neutral-900">
+                <AtSign className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <p className="truncate no-font-mono text-sm font-medium text-foreground">
                   {alias.localPart}@{alias.hostname}
                 </p>
               </div>
@@ -233,17 +233,17 @@ export default function MailboxSettingsPage() {
                 disabled={removeAlias.isPending}
                 onClick={() => removeAlias.mutate(alias.id)}
               >
-                <Trash2 className="h-4 w-4 text-red-600" />
+                <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </div>
           ))}
           {aliases.data && aliases.data.aliases.length === 0 && (
-            <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-500">
+            <p className="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">
               No aliases yet.
             </p>
           )}
           {aliases.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-destructive">
               {aliases.error instanceof Error
                 ? aliases.error.message
                 : "Failed to load aliases"}
@@ -260,7 +260,7 @@ export default function MailboxSettingsPage() {
             <Select
               value={aliasDomainId}
               onChange={(event) => setAliasDomainId(event.target.value)}
-              className="h-10 min-w-0 flex-1 text-sm"
+              containerClassName="min-w-0 flex-1"
               disabled={addAlias.isPending}
             >
               {(aliases.data?.availableDomains ?? []).map((domain) => (
@@ -279,12 +279,12 @@ export default function MailboxSettingsPage() {
             </Button>
           </div>
           {addAlias.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-destructive">
               {addAlias.error instanceof Error ? addAlias.error.message : "Failed to add alias"}
             </p>
           )}
           {removeAlias.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-destructive">
               {removeAlias.error instanceof Error
                 ? removeAlias.error.message
                 : "Failed to remove alias"}
@@ -294,25 +294,25 @@ export default function MailboxSettingsPage() {
       </Card>
 
       {mailbox.data?.type === "shared" && (
-        <Card className="rounded-3xl border-0 bg-white p-6">
-          <CardHeader className="py-0">
+        <Card>
+          <CardHeader>
             <CardTitle>Shared access</CardTitle>
             <CardDescription>
-              Team members added here can read, send, organize, and manage mail in this inbox.
+              People added here can read, send, organize, and manage mail in this inbox.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 pt-5">
+          <CardContent className="space-y-4">
             {sharedAccess.isLoading && <Skeleton className="h-16 w-full rounded-2xl" />}
             {(sharedAccess.data?.members ?? []).map((member) => (
               <div
                 key={member.userId}
-                className="flex items-center justify-between gap-3 rounded-2xl bg-neutral-50 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-2xl bg-muted px-4 py-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-neutral-900">
+                  <p className="truncate text-sm font-semibold text-foreground">
                     {member.userName}
                   </p>
-                  <p className="truncate text-xs text-neutral-500">{member.userEmail}</p>
+                  <p className="truncate text-xs text-muted-foreground">{member.userEmail}</p>
                 </div>
                 <Button
                   type="button"
@@ -322,17 +322,17 @@ export default function MailboxSettingsPage() {
                   disabled={removeMember.isPending}
                   onClick={() => removeMember.mutate(member.userId)}
                 >
-                  <Trash2 className="h-4 w-4 text-red-600" />
+                  <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
             ))}
             {sharedAccess.data && sharedAccess.data.members.length === 0 && (
-              <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-500">
-                No Team members have access yet.
+              <p className="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">
+                Nobody else has access yet.
               </p>
             )}
             {sharedAccess.isError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-destructive">
                 {sharedAccess.error instanceof Error
                   ? sharedAccess.error.message
                   : "Failed to load shared access"}
@@ -342,7 +342,7 @@ export default function MailboxSettingsPage() {
               <Select
                 value={selectedUserId}
                 onChange={(event) => setSelectedUserId(event.target.value)}
-                className="h-10 min-w-0 flex-1 text-sm"
+                containerClassName="min-w-0 flex-1"
               >
                 <option value="">Choose an account</option>
                 {(sharedAccess.data?.availableUsers ?? [])
@@ -366,16 +366,16 @@ export default function MailboxSettingsPage() {
               </Button>
             </div>
             {addMember.isError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-destructive">
                 {addMember.error instanceof Error ? addMember.error.message : "Failed to add account"}
               </p>
             )}
           </CardContent>
         </Card>
       )}
-      <Card className="rounded-3xl border-0 bg-white p-6">
-        <CardHeader className="py-0">
-          <CardTitle className="text-red-700">Danger zone</CardTitle>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger zone</CardTitle>
           <CardDescription>
             Deleting this mailbox removes its Cloudflare Email Routing rule, so
             new mail sent to {address || "this address"} will no longer be
@@ -383,9 +383,9 @@ export default function MailboxSettingsPage() {
             will no longer appear in any inbox. This cannot be undone.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-5">
+        <CardContent>
           {removeMailbox.isError && (
-            <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <p className="mb-4 rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
               {removeMailbox.error instanceof Error
                 ? removeMailbox.error.message
                 : "Failed to delete mailbox"}
@@ -412,45 +412,45 @@ export default function MailboxSettingsPage() {
       </Card>
 
 {/* 
-      <Card className="rounded-3xl border-0 bg-white p-6">
-        <CardHeader className="py-0">
+      <Card>
+        <CardHeader>
           <CardTitle>Address</CardTitle>
           <CardDescription>
             The email address, username, and domain are managed as routing
             resources.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 pt-5">
+        <CardContent className="grid gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Email
             </p>
-            <p className="truncate no-font-mono text-sm text-neutral-900">
+            <p className="truncate no-font-mono text-sm text-foreground">
               {address || "-"}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Username
             </p>
-            <p className="truncate no-font-mono text-sm text-neutral-900">
+            <p className="truncate no-font-mono text-sm text-foreground">
               {mailbox.data?.localPart ?? "-"}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Domain
             </p>
-            <p className="truncate no-font-mono text-sm text-neutral-900">
+            <p className="truncate no-font-mono text-sm text-foreground">
               {mailbox.data?.hostname ?? "-"}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Routing
             </p>
-            <p className="flex items-center gap-2 text-sm text-neutral-900">
-              <Mail className="h-4 w-4 text-neutral-400" />
+            <p className="flex items-center gap-2 text-sm text-foreground">
+              <Mail className="h-4 w-4 text-muted-foreground" />
               Cloudflare Email Routing
             </p>
           </div>

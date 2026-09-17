@@ -1,8 +1,10 @@
-import type { mailboxes } from "@/db/schema";
+import type { domains, mailboxes } from "@/db/schema";
 
-export type SeedMailboxKey = "support" | "billing";
+export type SeedMailboxKey = "support" | "billing" | "donotreply" | "hello";
 
 export type SeedMailboxMap = Record<SeedMailboxKey, typeof mailboxes.$inferSelect>;
+
+export type SeedDomainMap = Record<string, typeof domains.$inferSelect>;
 
 export type SeedMessageStatus =
 	| "received"

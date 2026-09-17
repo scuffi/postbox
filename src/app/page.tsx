@@ -2,224 +2,222 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
+import { ArrowRight, Command, Globe2, Inbox, LockKeyhole, Search, Sparkles, Star, Zap } from "lucide-react";
+import { BrandLockup } from "@/components/brand/postbox-mark";
+import { PillarBoxIllustration, PillarBoxStage } from "@/components/brand/pillar-box-illustration";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import { authFetch, getClientSessionToken } from "@/lib/auth/client";
-import { getHomeActions, heroMessages, sidebarItems } from "./utils";
-import { ArrowRight, Inbox, Mail, Search, ShieldCheck } from "lucide-react";
-import { useBranding } from "@/components/branding-provider";
+import { cn } from "@/lib/utils";
+import { getHomeActions } from "./utils";
+
+const previewRows = [
+	{ from: "Globex Sales", subject: "Partnership intro", preview: "Hi team, we would love to explore a partnership…", domain: "acme.dev", dot: "bg-violet-500", tint: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300", unread: true, time: "09:41" },
+	{ from: "Maya Chen", subject: "Cannot access workspace", preview: "I reset my password this morning, but the login page…", domain: "support@", dot: "bg-sky-500", tint: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300", unread: true, time: "09:12", starred: true },
+	{ from: "Contoso Finance", subject: "Invoice address update", preview: "Please update our invoice contact to finance-team…", domain: "billing@", dot: "bg-teal-500", tint: "bg-stone-200 text-stone-700 dark:bg-stone-500/20 dark:text-stone-300", time: "Yesterday" },
+	{ from: "Northwind DevOps", subject: "Webhook retry question", preview: "We noticed three delivery attempts for the same event…", domain: "support@", dot: "bg-sky-500", tint: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300", time: "Sep 14" },
+];
+
+const features = [
+	{ icon: Globe2, title: "Every domain, one inbox", description: "Colour-coded mailboxes across all your domains, with catch-alls, aliases and routing rules that just work." },
+	{ icon: Zap, title: "Built for speed", description: "Command palette, keyboard shortcuts and optimistic actions. Inbox zero without touching the mouse." },
+	{ icon: LockKeyhole, title: "Yours, end to end", description: "Self-hosted on Cloudflare or your own server. Your mail, your data, your infrastructure." },
+];
+
+function ProductPreview() {
+	return (
+		<div className="overflow-hidden rounded-2xl bg-canvas p-2 shadow-float ring-1 ring-border">
+			<div className="flex gap-2">
+				<div className="hidden w-44 shrink-0 flex-col gap-1 p-2 sm:flex">
+					<BrandLockup className="mb-3 [&_span:last-child]:text-[13px] [&_svg]:size-6" />
+					<div className="mb-2 flex h-8 items-center gap-2 rounded-lg bg-primary px-2.5 text-xs font-medium text-primary-foreground shadow-button">
+						<Sparkles className="size-3.5" /> New message
+					</div>
+					{[
+						{ label: "All inboxes", icon: Inbox, count: 12, active: true },
+						{ label: "acme.dev", dot: "bg-violet-500", count: 4 },
+						{ label: "example.com", dot: "bg-sky-500", count: 8 },
+						{ label: "Starred", icon: Star },
+					].map((item) => (
+						<div
+							key={item.label}
+							className={cn(
+								"flex h-7 items-center gap-2 rounded-lg px-2 text-xs font-medium",
+								item.active ? "bg-card text-foreground shadow-panel dark:bg-accent" : "text-muted-foreground",
+							)}
+						>
+							{item.icon ? <item.icon className={cn("size-3.5", item.active && "text-primary")} /> : <span className={cn("ml-1 mr-0.5 size-1.5 rounded-full", item.dot)} />}
+							<span className="flex-1 truncate">{item.label}</span>
+							{item.count && <span className="text-[10.5px] tabular-nums text-muted-foreground">{item.count}</span>}
+						</div>
+					))}
+				</div>
+				<div className="min-w-0 flex-1 overflow-hidden rounded-xl bg-card shadow-panel">
+					<div className="flex h-12 items-center gap-3 border-b border-border px-4">
+						<span className="font-display text-xl leading-none">Inbox</span>
+						<span className="text-[11px] font-medium text-primary">12 unread</span>
+						<span className="flex-1" />
+						<span className="hidden h-7 w-44 items-center gap-2 rounded-lg bg-foreground/[0.045] px-2 text-[11px] text-muted-foreground md:flex">
+							<Search className="size-3" /> Search mail <Kbd className="ml-auto h-4 text-[9px]">⌘K</Kbd>
+						</span>
+					</div>
+					<div className="space-y-px p-1.5">
+						{previewRows.map((row, index) => (
+							<motion.div
+								key={row.from}
+								initial={{ opacity: 0, x: -8 }}
+								whileInView={{ opacity: 1, x: 0 }}
+								viewport={{ once: true }}
+								transition={{ delay: 0.1 + index * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+								className={cn("relative flex h-11 items-center gap-3 rounded-lg px-3", index === 0 && "bg-primary-soft/60")}
+							>
+								{row.unread && <span className="absolute left-1 size-1 rounded-full bg-primary" />}
+								<span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold", row.tint)}>{row.from.charAt(0)}</span>
+								<span className={cn("w-28 shrink-0 truncate text-xs", row.unread ? "font-semibold" : "font-medium text-foreground/80")}>{row.from}</span>
+								<span className="hidden shrink-0 items-center gap-1 rounded bg-foreground/[0.04] px-1 text-[10px] text-muted-foreground ring-1 ring-inset ring-border/70 lg:inline-flex">
+									<span className={cn("size-1 rounded-full", row.dot)} />
+									{row.domain}
+								</span>
+								<span className="min-w-0 flex-1 truncate text-xs">
+									<span className={row.unread ? "font-semibold" : "text-foreground/80"}>{row.subject}</span>
+									<span className="text-muted-foreground"> — {row.preview}</span>
+								</span>
+								{row.starred && <Star className="size-3 shrink-0 fill-gold text-gold" />}
+								<span className={cn("shrink-0 text-[10.5px] tabular-nums", row.unread ? "font-medium text-primary" : "text-subtle-foreground")}>{row.time}</span>
+							</motion.div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
 
 export default function HomePage() {
-  const branding = useBranding();
-  const [hasUser, setHasUser] = useState(false);
+	const [hasUser, setHasUser] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!getClientSessionToken()) return;
+	useEffect(() => {
+		let cancelled = false;
+		if (!getClientSessionToken()) return;
 
-    authFetch("/api/auth/me", { redirectOnUnauthorized: false })
-      .then((response) => {
-        if (!cancelled) setHasUser(response.ok);
-      })
-      .catch(() => {
-        if (!cancelled) setHasUser(false);
-      });
+		authFetch("/api/auth/me", { redirectOnUnauthorized: false })
+			.then((response) => {
+				if (!cancelled) setHasUser(response.ok);
+			})
+			.catch(() => {
+				if (!cancelled) setHasUser(false);
+			});
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
-  const actions = getHomeActions(hasUser);
+	const actions = getHomeActions(hasUser);
 
-  return (
-    <div className="min-h-dvh bg-[#f6f8fc] text-neutral-900">
-      <header className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="flex items-center gap-3"
-          aria-label="Email Platform home"
-        >
-          <img src={branding.iconUrl} height={32} width={32} alt="" />
-          <span className="text-base font-semibold tracking-tight">
-            {branding.appName}
-          </span>
-        </Link>
-
-        {/* <nav className="hidden items-center gap-6 text-sm font-medium text-neutral-600 md:flex">
-					{landingNavItems.map((item) => (
-						<a key={item.href} href={item.href} className="transition-colors hover:text-neutral-950">
-							{item.label}
-						</a>
-					))}
-				</nav> */}
-
-        <div className="flex items-center gap-2">
-          {actions.map((action) => (
-            <Button key={action.href} variant={action.variant} asChild>
-              <Link href={action.href}>{action.label}</Link>
-            </Button>
-          ))}
-        </div>
-      </header>
-
-      <main>
-        <section className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 pb-12 pt-8 sm:px-6 md:pt-16 lg:grid-cols-[0.86fr_1.14fr] lg:px-8">
-          <div className="flex max-w-2xl flex-col justify-center">
-            <div className="mb-6 flex w-fit items-center gap-2 text-sm font-medium text-blue-800">
-              <ShieldCheck className="h-4 w-4" />
-              Cloudflare-native email operations
-            </div>
-            <h1 className="max-w-[12ch] text-5xl font-semibold leading-[0.96] tracking-tight text-neutral-950 sm:text-6xl lg:text-7xl">
-              Mailboxes that feel like your inbox.
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-neutral-600">
-              Add domains, route inbound mail, send through API keys, and manage
-              your mailboxes from one quiet workspace built around the message list.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" asChild className="rounded-full px-6">
-                <Link href={actions.at(-1)?.href ?? "/setup"}>
-                  {hasUser ? "Open dashboard" : "Create account"}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                asChild
-                className="rounded-full border-neutral-200 bg-white px-6"
-              >
-                <Link href={hasUser ? "/inbox" : "/login"}>
-                  {hasUser ? "View inbox" : "Log in"}
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="relative min-h-[520px] overflow-hidden rounded-[2rem] border border-white bg-white shadow-[0_24px_70px_-45px_rgba(30,64,175,0.55)]">
-            <div className="grid h-full min-h-[520px] grid-cols-[176px_1fr] bg-white">
-              <aside className="hidden flex-col gap-2 bg-[#f6f8fc] px-3 py-5 sm:flex">
-                <div className="mb-4 flex items-center gap-3 px-3 text-neutral-700">
-                  <Inbox className="h-5 w-5" />
-                  <span className="font-semibold">Mail</span>
-                </div>
-                <div className="mb-3 flex h-12 w-fit items-center gap-2 rounded-2xl bg-blue-100 px-5 text-sm font-semibold text-blue-950 shadow-sm">
-                  <Mail className="h-4 w-4" />
-                  Compose
-                </div>
-                {sidebarItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={item.label}
-                      className={`flex h-9 items-center justify-between rounded-r-full px-3 text-sm font-medium ${
-                        item.active
-                          ? "bg-blue-100 text-blue-950"
-                          : "text-neutral-600"
-                      }`}
-                    >
-                      <span className="flex items-center gap-3">
-                        <Icon className="h-4 w-4" />
-                        {item.label}
-                      </span>
-                      {item.count && (
-                        <span className="text-xs text-blue-800">
-                          {item.count}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </aside>
-
-              <div className="col-span-2 flex min-w-0 flex-col sm:col-span-1">
-                <div className="flex h-16 items-center gap-3 bg-[#f6f8fc] px-4">
-                  <div className="flex h-12 flex-1 items-center gap-3 rounded-full bg-[#eaf1fb] px-4 text-neutral-600">
-                    <Search className="h-5 w-5" />
-                    <span className="text-[15px]">Search mail</span>
-                  </div>
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
-                    <Mail className="h-4 w-4" />
-                  </div>
-                </div>
-
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-tl-3xl bg-white">
-                  <div className="flex h-14 items-center justify-between border-b border-neutral-200 px-6">
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-xl font-medium text-neutral-800">
-                        Priority inbox
-                      </h2>
-                      <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
-                        18
-                      </span>
-                    </div>
-                    <span className="hidden text-sm font-medium text-neutral-500 md:inline">
-                      Updated 2 min ago
-                    </span>
-                  </div>
-                  <div className="divide-y divide-neutral-100">
-                    {heroMessages.map((message) => (
-                      <div
-                        key={message.sender}
-                        className="grid min-h-14 grid-cols-[28px_minmax(112px,180px)_1fr_auto] items-center gap-3 px-5 text-sm hover:bg-[#f2f6fc]"
-                      >
-                        <message.icon className="h-4 w-4 text-neutral-300" />
-                        <span className="truncate font-semibold text-neutral-900">
-                          {message.sender}
-                        </span>
-                        <span className="truncate text-neutral-600">
-                          <span className="font-medium text-neutral-900">
-                            {message.subject}
-                          </span>
-                          <span className="hidden text-neutral-500 md:inline">
-                            {" "}
-                            - {message.preview}
-                          </span>
-                        </span>
-                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                          {message.badge}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* <section id="workflow" className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 pb-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
-					<div id="api" className="rounded-[1.75rem] bg-white p-6 shadow-sm shadow-neutral-200/50">
-						<div className="mb-6 flex items-center justify-between gap-4">
-							<div>
-								<p className="text-sm font-semibold text-blue-700">Operational view</p>
-								<h2 className="mt-1 text-2xl font-semibold tracking-tight">From DNS to delivery in one place.</h2>
-							</div>
-							<Clock3 className="hidden h-6 w-6 text-neutral-400 sm:block" />
-						</div>
-						<div className="grid gap-4 sm:grid-cols-3">
-							{inboxStats.map((stat) => (
-								<div key={stat.label} className="border-t border-neutral-200 pt-4">
-									<p className="no-font-mono text-2xl font-semibold text-neutral-950">{stat.value}</p>
-									<p className="mt-1 text-sm text-neutral-500">{stat.label}</p>
-								</div>
-							))}
-						</div>
+	return (
+		<div className="min-h-dvh overflow-x-hidden bg-canvas text-foreground">
+			<header className="sticky top-0 z-30 border-b border-transparent bg-canvas/70 backdrop-blur-xl">
+				<div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
+					<Link href="/" aria-label="Home">
+						<BrandLockup />
+					</Link>
+					<div className="flex items-center gap-1.5">
+						<ThemeToggle />
+						{actions.map((action) => (
+							<Button key={action.href} variant={action.variant === "outline" ? "ghost" : action.variant} size="sm" asChild>
+								<Link href={action.href}>{action.label}</Link>
+							</Button>
+						))}
 					</div>
+				</div>
+			</header>
 
-					<div id="domains" className="rounded-[1.75rem] bg-white p-6 shadow-sm shadow-neutral-200/50">
-						<p className="text-sm font-semibold text-blue-700">Delivery signals</p>
-						<div className="mt-5 space-y-4">
-							{deliverySignals.map((signal) => (
-								<div key={signal} className="flex items-center gap-3 text-sm font-medium text-neutral-700">
-									<CheckCircle2 className="h-5 w-5 text-blue-600" />
-									<span>{signal}</span>
-								</div>
-							))}
+			<main>
+				<section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-5 pb-16 pt-10 sm:px-8 md:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
+					<motion.div
+						initial={{ opacity: 0, y: 16 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+					>
+						<span className="inline-flex h-7 items-center gap-2 rounded-full bg-card pl-1 pr-3 text-xs font-medium text-muted-foreground shadow-panel">
+							<span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-primary-soft-foreground">New</span>
+							Self-hosted mail, reimagined
+						</span>
+						<h1 className="mt-6 font-display text-[56px] leading-[0.95] tracking-[-0.02em] text-foreground sm:text-[76px] lg:text-[88px]">
+							Every domain.
+							<br />
+							<span className="italic text-primary">One beautiful</span> inbox.
+						</h1>
+						<p className="mt-6 max-w-lg text-[17px] leading-relaxed text-muted-foreground">
+							postbox brings every address you own into a single, fast, keyboard-first inbox — running on your own infrastructure.
+						</p>
+						<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+							<Button size="lg" asChild>
+								<Link href={actions.at(-1)?.href ?? "/setup"}>
+									{hasUser ? "Open your inbox" : "Get started"}
+									<ArrowRight />
+								</Link>
+							</Button>
+							<Button size="lg" variant="secondary" asChild>
+								<Link href={hasUser ? "/inbox" : "/login"}>{hasUser ? "View inbox" : "Sign in"}</Link>
+							</Button>
+							<span className="hidden items-center gap-1.5 pl-2 text-xs text-subtle-foreground sm:flex">
+								<Command className="size-3.5" /> Press <Kbd>⌘K</Kbd> anywhere
+							</span>
 						</div>
+					</motion.div>
+
+					<motion.div
+						initial={{ opacity: 0, scale: 0.97 }}
+						animate={{ opacity: 1, scale: 1 }}
+						transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+					>
+						<PillarBoxStage className="flex aspect-[4/4.2] items-center justify-center rounded-[32px] px-10 py-12 sm:aspect-[4/3.8]">
+							<PillarBoxIllustration className="max-w-[210px] sm:max-w-[230px]" />
+						</PillarBoxStage>
+					</motion.div>
+				</section>
+
+				<section className="mx-auto max-w-6xl px-5 pb-20 sm:px-8">
+					<motion.div
+						initial={{ opacity: 0, y: 24 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						viewport={{ once: true, margin: "-80px" }}
+						transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+					>
+						<ProductPreview />
+					</motion.div>
+
+					<div className="mt-16 grid gap-3 md:grid-cols-3">
+						{features.map((feature, index) => (
+							<motion.div
+								key={feature.title}
+								initial={{ opacity: 0, y: 16 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								viewport={{ once: true }}
+								transition={{ duration: 0.6, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+								className="rounded-2xl border border-border bg-card p-6"
+							>
+								<span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
+									<feature.icon className="size-[18px]" />
+								</span>
+								<h3 className="mt-5 text-[15px] font-semibold tracking-[-0.01em]">{feature.title}</h3>
+								<p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">{feature.description}</p>
+							</motion.div>
+						))}
 					</div>
-				</section> */}
-      </main>
-    </div>
-  );
+				</section>
+			</main>
+
+			<footer className="border-t border-border">
+				<div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 text-xs text-subtle-foreground sm:px-8">
+					<BrandLockup className="opacity-70 [&_span:last-child]:text-[13px] [&_svg]:size-5" />
+					<span>Self-hosted mail for every domain you own</span>
+				</div>
+			</footer>
+		</div>
+	);
 }

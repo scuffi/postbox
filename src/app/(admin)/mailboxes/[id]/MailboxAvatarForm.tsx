@@ -70,7 +70,7 @@ export default function MailboxAvatarForm({
 				type="button"
 				onClick={() => inputRef.current?.click()}
 				disabled={busy}
-				className="group relative h-24 w-24 overflow-hidden rounded-full border border-neutral-200 bg-blue-600 text-white shadow-sm outline-none ring-blue-500 transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
+				className="group relative size-20 overflow-hidden rounded-full bg-gradient-to-br from-stone-700 to-stone-900 text-white shadow-panel outline-none ring-ring/40 transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait dark:from-stone-300 dark:to-stone-500 dark:text-stone-900"
 				aria-label={hasAvatar ? `Change ${name} profile picture` : `Upload ${name} profile picture`}
 			>
 				{hasAvatar ? (
@@ -96,7 +96,7 @@ export default function MailboxAvatarForm({
 					)}
 				</span>
 			</button>
-			{status && <p className="max-w-xs text-xs text-red-600">{status}</p>}
+			{status && <p className="max-w-xs text-xs text-destructive">{status}</p>}
 		</div>
 	);
 }

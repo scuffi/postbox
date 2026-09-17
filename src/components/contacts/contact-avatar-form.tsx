@@ -70,7 +70,7 @@ export function ContactAvatarForm({
 					type="button"
 					onClick={() => inputRef.current?.click()}
 					disabled={busy}
-					className="group relative h-14 w-14 overflow-hidden rounded-full outline-none ring-blue-500 focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
+					className="group relative h-14 w-14 overflow-hidden rounded-full outline-none ring-ring/40 focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
 					aria-label={hasAvatar ? `Change ${name} profile picture` : `Upload ${name} profile picture`}
 				>
 					<ContactAvatar
@@ -85,16 +85,16 @@ export function ContactAvatarForm({
 					</span>
 				</button>
 				<div>
-					<p className="text-sm font-medium text-neutral-900">Profile picture</p>
-					<p className="text-xs text-neutral-500">Upload a custom contact photo.</p>
+					<p className="text-sm font-medium text-foreground">Profile picture</p>
+					<p className="text-xs text-muted-foreground">Upload a custom contact photo.</p>
 					{hasAvatar && (
-						<button type="button" onClick={() => void onRemove()} disabled={busy} className="mt-1 text-xs font-medium text-blue-600 hover:underline disabled:text-neutral-400">
+						<button type="button" onClick={() => void onRemove()} disabled={busy} className="mt-1 text-xs font-medium text-primary hover:underline disabled:text-muted-foreground">
 							Remove photo
 						</button>
 					)}
 				</div>
 			</div>
-			{status && <p className="text-xs text-red-600">{status}</p>}
+			{status && <p className="text-xs text-destructive">{status}</p>}
 		</div>
 	);
 }

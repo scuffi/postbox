@@ -9,6 +9,7 @@ export type SetupRequirementCheck = {
 	key: string;
 	configured: boolean;
 	message: string;
+	required?: boolean;
 };
 
 export type SetupPreparationResult = {

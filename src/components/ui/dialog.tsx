@@ -12,42 +12,61 @@ export const DialogClose = DialogPrimitive.Close;
 export function DialogContent({
 	className,
 	children,
+	hideClose = false,
 	...props
-}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>) {
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { hideClose?: boolean }) {
 	return (
 		<DialogPrimitive.Portal>
-			<DialogPrimitive.Overlay className="dialog-overlay fixed inset-0 z-50 bg-black/35" />
+			<DialogPrimitive.Overlay className="anim-overlay fixed inset-0 z-50 bg-stone-950/30 backdrop-blur-[3px] dark:bg-black/60" />
 			<DialogPrimitive.Content
 				className={cn(
-					"dialog-content fixed left-1/2 top-1/2 z-50 w-[min(520px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl",
+					"anim-dialog fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-4rem)] w-[min(520px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-6 text-popover-foreground shadow-float outline-none",
 					className,
 				)}
 				{...props}
 			>
 				{children}
-				<DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900">
-					<X className="h-4 w-4" />
-					<span className="sr-only">Close</span>
-				</DialogPrimitive.Close>
+				{!hideClose && (
+					<DialogPrimitive.Close className="absolute right-3.5 top-3.5 flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+						<X className="size-4" />
+						<span className="sr-only">Close</span>
+					</DialogPrimitive.Close>
+				)}
 			</DialogPrimitive.Content>
 		</DialogPrimitive.Portal>
 	);
 }
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-	return <div className={cn("mb-5 space-y-1.5", className)} {...props} />;
+	return <div className={cn("mb-5 space-y-1 pr-8", className)} {...props} />;
 }
 
-export function DialogTitle({
-	className,
-	...props
-}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>) {
-	return <DialogPrimitive.Title className={cn("text-lg font-semibold text-neutral-900", className)} {...props} />;
+export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+	return (
+		<div
+			className={cn("-mx-6 -mb-6 mt-6 flex items-center justify-end gap-2 border-t border-border bg-elevated/60 px-6 py-3.5", className)}
+			{...props}
+		/>
+	);
+}
+
+export function DialogTitle({ className, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>) {
+	return (
+		<DialogPrimitive.Title
+			className={cn("text-[17px] font-semibold tracking-[-0.015em] text-foreground", className)}
+			{...props}
+		/>
+	);
 }
 
 export function DialogDescription({
 	className,
 	...props
 }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>) {
-	return <DialogPrimitive.Description className={cn("text-sm text-neutral-500", className)} {...props} />;
+	return (
+		<DialogPrimitive.Description
+			className={cn("text-[13px] leading-relaxed text-muted-foreground", className)}
+			{...props}
+		/>
+	);
 }

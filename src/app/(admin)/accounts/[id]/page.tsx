@@ -53,24 +53,24 @@ export default function AccountDetailsPage() {
 		}
 	}
 
-	if (!account) return <p className="text-sm text-neutral-500">{message ?? "Loading account..."}</p>;
+	if (!account) return <p className="text-sm text-muted-foreground">{message ?? "Loading account..."}</p>;
 
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-3xl font-medium text-neutral-900">Details</h1>
-				<p className="mt-2 text-sm text-neutral-500">Update this account&apos;s profile and status.</p>
+				<h1 className="font-display text-[40px] leading-[1.05] text-foreground">Details</h1>
+				<p className="mt-2 text-sm text-muted-foreground">Update this account&apos;s profile and status.</p>
 			</div>
-			<section className="space-y-5 rounded-3xl bg-white p-6">
+			<section className="space-y-5 rounded-2xl border border-border bg-card p-6">
 				<div className="flex items-center gap-4">
-					<span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xl font-semibold text-blue-700">
+					<span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary-soft text-xl font-semibold text-primary-soft-foreground">
 						{account.name.charAt(0).toUpperCase()}
 						{account.hasAvatar && (
 							<img src={`/api/accounts/${id}/avatar?v=${avatarVersion}`} alt="" className="absolute inset-0 h-full w-full object-cover" />
 						)}
 					</span>
 					<Label className="cursor-pointer">
-						<span className="inline-flex h-9 items-center gap-2 rounded-md border border-neutral-200 px-3 text-sm">
+						<span className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm">
 							<Upload className="h-4 w-4" />
 							Change avatar
 						</span>
@@ -79,7 +79,7 @@ export default function AccountDetailsPage() {
 				</div>
 				<div className="space-y-2">
 					<Label htmlFor="account-email">Email</Label>
-					<Input id="account-email" value={account.email} readOnly className="bg-neutral-50 text-neutral-500" />
+					<Input id="account-email" value={account.email} readOnly className="bg-muted text-muted-foreground" />
 				</div>
 				<div className="space-y-2">
 					<Label htmlFor="account-name">Name</Label>
@@ -94,7 +94,7 @@ export default function AccountDetailsPage() {
 						onChange={(event) => setAccount({ ...account, forwardingEmail: event.target.value || null })}
 						placeholder="destination@example.com"
 					/>
-					<p className="text-xs leading-5 text-neutral-500">
+					<p className="text-xs leading-5 text-muted-foreground">
 						Incoming mail will also be sent to this verified Cloudflare Email Routing destination.
 					</p>
 				</div>}
@@ -109,7 +109,7 @@ export default function AccountDetailsPage() {
 						onChange={(event) => setAccount({ ...account, newPassword: event.target.value })}
 						placeholder="Leave blank to keep the current password"
 					/>
-					<p className="text-xs leading-5 text-neutral-500">
+					<p className="text-xs leading-5 text-muted-foreground">
 						Setting a password signs this account out everywhere. Share it with the user through another channel.
 					</p>
 				</div>
@@ -121,7 +121,7 @@ export default function AccountDetailsPage() {
 					{saving ? "Saving..." : "Save details"}
 				</Button>
 			</section>
-			{message && <p className="text-sm text-neutral-500">{message}</p>}
+			{message && <p className="text-sm text-muted-foreground">{message}</p>}
 		</div>
 	);
 }

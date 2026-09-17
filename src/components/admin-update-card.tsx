@@ -51,34 +51,34 @@ export function AdminUpdateCard() {
 	}
 
 	return (
-		<Card className="rounded-3xl border-0 bg-white p-6">
-			<CardHeader className="flex-row items-center gap-4 space-y-0 py-0">
-				<div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+		<Card>
+			<CardHeader className="flex-row items-center gap-4">
+				<div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-primary-soft-foreground">
 					<RefreshCw className="h-5 w-5" />
 				</div>
 				<div>
 					<CardTitle className="text-base">Application update</CardTitle>
-					<p className="mt-1 text-sm text-neutral-500">
-						Sync the latest Mailflare release, apply D1 migrations, and deploy the Worker.
+					<p className="mt-1 text-sm text-muted-foreground">
+						Sync the latest postbox release, apply D1 migrations, and deploy the Worker.
 					</p>
 				</div>
 			</CardHeader>
-			<CardContent className="flex items-center gap-4 pt-5">
+			<CardContent className="flex items-center gap-4">
 				<Button type="button" onClick={handleUpdate} disabled={isChecking || isPending || !status?.available}>
 					<RefreshCw className={isPending ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-					{isPending ? "Starting update..." : "Update Mailflare"}
+					{isPending ? "Starting update..." : "Update postbox"}
 				</Button>
 				{isChecking && <Skeleton className="h-4 w-44" />}
 				{!isChecking && status?.available && (
-					<p className="text-sm text-amber-700">
+					<p className="text-sm text-amber-700 dark:text-amber-400">
 						Update available: v{status.currentVersion} → v{status.targetVersion}
 					</p>
 				)}
 				{!isChecking && status && !status.available && (
-					<p className="text-sm text-green-700">Mailflare v{status.currentVersion} is up to date.</p>
+					<p className="text-sm text-emerald-700 dark:text-emerald-400">postbox v{status.currentVersion} is up to date.</p>
 				)}
 				{result?.ok && (
-					<p className="text-sm text-green-700">
+					<p className="text-sm text-emerald-700 dark:text-emerald-400">
 						Update started for {result.repository}@{result.ref}.{" "}
 						{result.runUrl && (
 							<a className="font-medium underline" href={result.runUrl} target="_blank" rel="noreferrer">
@@ -87,7 +87,7 @@ export function AdminUpdateCard() {
 						)}
 					</p>
 				)}
-				{error && <p className="text-sm text-red-600">{error}</p>}
+				{error && <p className="text-sm text-destructive">{error}</p>}
 			</CardContent>
 		</Card>
 	);

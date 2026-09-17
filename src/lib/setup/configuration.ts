@@ -14,13 +14,15 @@ export function getSetupRequirementChecks(env: CloudflareEnv): SetupRequirementC
 				message: "DATA_DIR must be writable; the SQLite database is created there on start.",
 			},
 			{
-				key: "Outbound mail",
+				key: "Outbound mail (optional)",
 				configured: mailer?.configured === true,
+				required: false,
 				message: "Set SMTP_URL, or CF_ACCOUNT_ID with CF_TOKEN to send through Cloudflare. Receiving works without it.",
 			},
 			{
 				key: "Cloudflare API credentials (optional)",
 				configured: true,
+				required: false,
 				message: hasCloudflareCredentials(env)
 					? "Domains are provisioned on Cloudflare automatically."
 					: "Not set: add MX and SPF records for each domain by hand, as shown on the domain page.",

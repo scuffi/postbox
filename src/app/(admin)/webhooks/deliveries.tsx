@@ -15,11 +15,11 @@ import {
 } from "./utils";
 
 const STATUS_STYLES: Record<WebhookDelivery["status"], string> = {
-	delivered: "bg-green-600/10 text-green-700",
-	failed: "bg-red-600/10 text-red-700",
-	exhausted: "bg-red-600/10 text-red-700",
-	retrying: "bg-amber-500/10 text-amber-700",
-	pending: "bg-neutral-200 text-neutral-700",
+	delivered: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+	failed: "bg-red-500/10 text-red-700 dark:text-red-400",
+	exhausted: "bg-red-500/10 text-red-700 dark:text-red-400",
+	retrying: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+	pending: "bg-muted text-foreground/80",
 };
 
 export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
@@ -40,72 +40,72 @@ export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
 	});
 
 	if (deliveries.isLoading) {
-		return <p className="text-sm text-neutral-500">Loading deliveries…</p>;
+		return <p className="px-5 py-4 text-sm text-muted-foreground">Loading deliveries…</p>;
 	}
 
 	if (!deliveries.data?.length) {
-		return <p className="text-sm text-neutral-500">No deliveries recorded yet.</p>;
+		return <p className="px-5 py-4 text-sm text-muted-foreground">No deliveries recorded yet.</p>;
 	}
 
 	return (
-		<div className="overflow-x-auto rounded-xl border border-neutral-200">
-			<table className="w-full min-w-[820px] text-left text-sm">
-				<thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+		<div className="overflow-x-auto">
+			<table className="data-table min-w-[820px]">
+				<thead>
 					<tr>
-						<th className="px-3 py-2 font-medium">Event</th>
-						<th className="px-3 py-2 font-medium">Status</th>
-						<th className="px-3 py-2 font-medium">Attempts</th>
-						<th className="px-3 py-2 font-medium">Response</th>
-						<th className="px-3 py-2 font-medium">Last attempt</th>
-						<th className="px-3 py-2 font-medium">Next retry</th>
-						<th className="px-3 py-2 font-medium" />
+						<th>Event</th>
+						<th>Status</th>
+						<th>Attempts</th>
+						<th>Response</th>
+						<th>Last attempt</th>
+						<th>Next retry</th>
+						<th />
 					</tr>
 				</thead>
 				<tbody>
 					{deliveries.data.map((delivery) => (
-						<tr key={delivery.id} className="border-t border-neutral-100 align-top">
-							<td className="px-3 py-2">
-								<span className="block">{delivery.eventType}</span>
-								<span className="block text-xs text-neutral-400">
+						<tr key={delivery.id}>
+							<td>
+								<span className="block font-mono text-xs text-foreground">{delivery.eventType}</span>
+								<span className="block text-xs text-muted-foreground">
 									{formatTimestamp(delivery.createdAt)}
 								</span>
 							</td>
-							<td className="px-3 py-2">
+							<td>
 								<Badge className={STATUS_STYLES[delivery.status]}>
 									{DELIVERY_STATUS_LABELS[delivery.status] ?? delivery.status}
 								</Badge>
 							</td>
-							<td className="px-3 py-2 whitespace-nowrap">
+							<td className="whitespace-nowrap tabular-nums">
 								{/* Manual retries can push attempts past the configured max, so never show "3 / 2". */}
 								{delivery.attempts} / {Math.max(delivery.maxAttempts, delivery.attempts)}
 							</td>
-							<td className="px-3 py-2">
+							<td>
 								<span className="block whitespace-nowrap">
 									{delivery.responseStatus ?? "—"}
 									{delivery.durationMs !== null && (
 										// An explicit separator: "200" next to "6ms" otherwise reads as "2006ms".
-										<span className="ml-1 text-xs text-neutral-400">
+										<span className="ml-1 text-xs text-muted-foreground">
 											· {formatDuration(delivery.durationMs)}
 										</span>
 									)}
 								</span>
 								{delivery.error && (
-									<span className="mt-1 block max-w-xs truncate text-xs text-red-600" title={delivery.error}>
+									<span className="mt-1 block max-w-xs truncate text-xs text-destructive" title={delivery.error}>
 										{delivery.error}
 									</span>
 								)}
 							</td>
-							<td className="px-3 py-2 whitespace-nowrap text-neutral-600">
+							<td className="whitespace-nowrap text-muted-foreground">
 								{formatTimestamp(delivery.lastAttemptAt)}
 							</td>
-							<td className="px-3 py-2 whitespace-nowrap text-neutral-600">
+							<td className="whitespace-nowrap text-muted-foreground">
 								{formatTimestamp(delivery.nextRetryAt)}
 							</td>
-							<td className="px-3 py-2">
+							<td>
 								{isRetryable(delivery) && (
 									<Button
-										variant="outline"
-										size="sm"
+										variant="secondary"
+										size="xs"
 										disabled={retry.isPending}
 										onClick={() => retry.mutate(delivery.id)}
 									>

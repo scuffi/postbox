@@ -4,20 +4,27 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Plus, UsersRound } from "lucide-react";
+import { ChevronRight, Mail, Plus, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { ListCard, listRowClassName } from "@/components/ui/list-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { SkeletonRows } from "@/components/ui/skeleton";
+import { getContactAvatarTint } from "@/components/contacts/contact-avatar-utils";
+import { domainColor } from "@/lib/domain-color";
+import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { CardGridSkeleton } from "@/components/page-skeletons";
 import { clearMailboxesCache } from "@/components/mailbox-provider-utils";
 import { authFetch } from "@/lib/auth/client";
 import type { CurrentAccountResponse, Domain, MailboxOwner, MailboxesResponse } from "./types";
@@ -118,8 +125,11 @@ export default function MailboxesPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between gap-4">
-				<h1 className="text-3xl font-medium">Mailboxes</h1>
+			<PageHeader
+				className="mb-2"
+				title="Mailboxes"
+				description="Every address postbox receives mail for, personal and shared."
+				actions={
 				<Dialog open={createOpen} onOpenChange={setCreateOpen}>
 					<DialogTrigger asChild>
 						<Button>
@@ -140,7 +150,7 @@ export default function MailboxesPage() {
 										id="mailbox-type"
 										value={mailboxType}
 										onChange={(event) => setMailboxType(event.target.value as "personal" | "shared")}
-										className="flex h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm shadow-sm shadow-neutral-200/50 focus-visible:border-blue-600 focus-visible:outline-none"
+										containerClassName="w-full"
 									>
 										<option value="personal">Personal inbox</option>
 										<option value="shared">Shared inbox</option>
@@ -158,7 +168,7 @@ export default function MailboxesPage() {
 										setOwnerUserId(event.target.value);
 										if (owner) setDisplayName(owner.name);
 									}}
-									className="flex h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm shadow-sm shadow-neutral-200/50 focus-visible:border-blue-600 focus-visible:outline-none"
+									containerClassName="w-full"
 								>
 									{mailboxOwners.map((owner) => (
 										<option key={owner.id} value={owner.id}>
@@ -168,8 +178,8 @@ export default function MailboxesPage() {
 								</Select>
 							</div>
 							) : (
-								<p className="rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-800">
-									After creating the shared inbox, choose which Team accounts can access it.
+								<p className="rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary-soft-foreground">
+									After creating the shared inbox, choose which accounts can access it.
 								</p>
 							)}
 							<div className="space-y-2">
@@ -183,18 +193,19 @@ export default function MailboxesPage() {
 							</div>
 							<div className="space-y-2">
 								<Label htmlFor="mailbox-username">Email address</Label>
-								<div className="flex h-10 overflow-hidden rounded-md border border-neutral-200 bg-white shadow-sm shadow-neutral-200/50 focus-within:border-blue-600">
-									<Input
+								<div className="flex h-9 overflow-hidden rounded-lg border border-input bg-card shadow-[0_1px_2px_rgb(0_0_0/0.03)] transition-[border-color,box-shadow] focus-within:border-ring/60 focus-within:ring-[3px] focus-within:ring-ring/15 dark:bg-muted/40">
+									<input
 										id="mailbox-username"
 										value={localPart}
 										onChange={(event) => setLocalPart(event.target.value)}
 										placeholder="support"
-										className="min-w-0 flex-1 rounded-none border-0 shadow-none focus-visible:border-0"
+										className="min-w-0 flex-1 bg-transparent px-3 text-sm text-foreground outline-none placeholder:text-subtle-foreground"
 									/>
-									<span className="flex items-center text-sm text-neutral-400">@</span>
+									<span className="flex items-center border-l border-border bg-muted/60 px-2 text-sm text-muted-foreground">@</span>
 									<Select
 										aria-label="Domain"
-										className="min-w-0 max-w-[55%] bg-transparent px-3 text-sm text-neutral-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+										containerClassName="max-w-[55%]"
+										className="h-full rounded-none border-0 bg-muted/60 shadow-none hover:border-0 focus-visible:ring-0 dark:bg-muted/60"
 										value={domainId}
 										onChange={(event) => setDomainId(event.target.value)}
 									>
@@ -208,76 +219,84 @@ export default function MailboxesPage() {
 								</div>
 							</div>
 							{create.isError && (
-								<p className="text-sm text-red-600">{(create.error as Error).message}</p>
+								<p className="text-sm text-destructive">{(create.error as Error).message}</p>
 							)}
+						</div>
+						<DialogFooter>
+							<Button variant="ghost" onClick={() => setCreateOpen(false)}>
+								Cancel
+							</Button>
 							<Button
 								onClick={() => create.mutate()}
 								disabled={(mailboxType === "personal" && !ownerUserId) || !displayName.trim() || !domainId || !localPart || create.isPending}
 							>
-								{create.isPending ? "Creating..." : "Create mailbox"}
+								{create.isPending ? "Creating…" : "Create mailbox"}
 							</Button>
-						</div>
+						</DialogFooter>
 					</DialogContent>
 				</Dialog>
-			</div>
-			<section className="space-y-3">
-				{/* <div className="flex items-center justify-between">
-					<span className="text-sm text-neutral-500">
-						{(mailboxes.data?.mailboxes ?? []).length} total
-					</span>
-				</div> */}
-				{mailboxes.isLoading && (
-					<CardGridSkeleton />
-				)}
-				{!mailboxes.isLoading && (mailboxes.data?.mailboxes ?? []).length === 0 && (
-					<p className="rounded-2xl bg-white px-5 py-4 text-sm text-neutral-500">
-						No mailboxes yet
-					</p>
-				)}
-				<div className="grid gap-3">
-					{(mailboxes.data?.mailboxes ?? []).map((mailbox) => {
-						const mailboxWithHostname = {
-							...mailbox,
-							hostname: mailbox.hostname ?? domainMap.get(mailbox.domainId) ?? "?",
-						};
+				}
+			/>
+			<section>
+				{mailboxes.isLoading ? (
+					<ListCard>
+						<SkeletonRows count={4} />
+					</ListCard>
+				) : (mailboxes.data?.mailboxes ?? []).length === 0 ? (
+					<ListCard>
+						<EmptyState icon={Mail} title="No mailboxes yet" description="Create an address to start receiving mail." />
+					</ListCard>
+				) : (
+					<ListCard>
+						{(mailboxes.data?.mailboxes ?? []).map((mailbox) => {
+							const mailboxWithHostname = {
+								...mailbox,
+								hostname: mailbox.hostname ?? domainMap.get(mailbox.domainId) ?? "?",
+							};
+							const color = domainColor(mailboxWithHostname.hostname);
 
-						return (
-							<Link
-								key={mailbox.id}
-								href={`/mailboxes/${mailbox.id}`}
-								className="group flex items-start gap-4 rounded-3xl bg-white p-5 transition-colors hover:bg-blue-50/10"
-							>
-								<span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
-									{getMailboxName(mailboxWithHostname).trim().charAt(0).toUpperCase() || "?"}
-									{mailbox.hasAvatar && (
-										<img
-											src={`/api/mailboxes/${mailbox.id}/avatar`}
-											alt={`${getMailboxName(mailboxWithHostname)} profile`}
-											className="absolute inset-0 h-full w-full object-cover"
-											onError={(event) => event.currentTarget.remove()}
-										/>
-									)}
-								</span>
-								<span className="min-w-0">
-									<span className="flex min-w-0 items-center gap-2">
-										<span className="block truncate text-sm font-semibold text-neutral-900">
-											{getMailboxName(mailboxWithHostname)}
-										</span>
-										{mailbox.type === "shared" && (
-											<span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-												<UsersRound className="h-3 w-3" />
-												Shared
-											</span>
+							return (
+								<Link key={mailbox.id} href={`/mailboxes/${mailbox.id}`} className={listRowClassName}>
+									<span
+										className={cn(
+											"relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-semibold",
+											getContactAvatarTint(getMailboxAddress(mailboxWithHostname)),
+										)}
+									>
+										{getMailboxName(mailboxWithHostname).trim().charAt(0).toUpperCase() || "?"}
+										{mailbox.hasAvatar && (
+											// eslint-disable-next-line @next/next/no-img-element
+											<img
+												src={`/api/mailboxes/${mailbox.id}/avatar`}
+												alt={`${getMailboxName(mailboxWithHostname)} profile`}
+												className="absolute inset-0 size-full object-cover"
+												onError={(event) => event.currentTarget.remove()}
+											/>
 										)}
 									</span>
-									<span className="block truncate no-font-mono text-sm text-neutral-500">
-										{getMailboxAddress(mailboxWithHostname)}
+									<span className="min-w-0 flex-1">
+										<span className="flex min-w-0 items-center gap-2">
+											<span className="truncate text-sm font-semibold text-foreground">
+												{getMailboxName(mailboxWithHostname)}
+											</span>
+											{mailbox.type === "shared" && (
+												<span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary-soft px-1.5 py-px text-[11px] font-medium text-primary-soft-foreground ring-1 ring-inset ring-primary/20">
+													<UsersRound className="size-3" />
+													Shared
+												</span>
+											)}
+										</span>
+										<span className="flex min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground">
+											<span className={cn("size-1.5 shrink-0 rounded-full", color.dot)} />
+											<span className="truncate">{getMailboxAddress(mailboxWithHostname)}</span>
+										</span>
 									</span>
-								</span>
-							</Link>
-						);
-					})}
-				</div>
+									<ChevronRight className="size-4 shrink-0 text-subtle-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+								</Link>
+							);
+						})}
+					</ListCard>
+				)}
 			</section>
 		</div>
 	);

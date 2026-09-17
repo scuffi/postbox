@@ -92,15 +92,15 @@ export function ProfileForm({
     <>
       <form
         onSubmit={onProfileSubmit}
-        className="space-y-6 rounded-b-lg rounded-t-3xl bg-white p-6"
+        className="space-y-5 rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03)] sm:p-6"
       >
         <div className="flex items-center gap-4">
           <ProfileAvatarForm name={name} />
           <div>
-            <p className="text-sm font-medium text-neutral-900">
+            <p className="text-sm font-semibold text-foreground">
               Profile picture
             </p>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
               Choose a picture to show across your account.
             </p>
           </div>
@@ -123,32 +123,32 @@ export function ProfileForm({
             type="email"
             readOnly
             aria-readonly="true"
-            className="bg-neutral-50"
+            className="bg-muted text-muted-foreground dark:bg-muted"
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 border-t border-border pt-4">
           <Button
             type="submit"
             disabled={savingProfile || name.trim() === savedName}
           >
-            {savingProfile ? "Saving..." : "Save profile"}
+            {savingProfile ? "Saving…" : "Save profile"}
           </Button>
           {profileStatus && (
-            <p className="text-sm text-neutral-500">{profileStatus}</p>
+            <p className="animate-fade-in text-[13px] text-muted-foreground">{profileStatus}</p>
           )}
         </div>
       </form>
 
       <form
         onSubmit={onRecoverySubmit}
-        className="space-y-4 rounded-lg bg-white p-6"
+        className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.03)] sm:p-6"
       >
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900">
+          <h3 className="text-sm font-semibold text-foreground">
             Recovery email
           </h3>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
             Used to recover access if you cannot sign in.
           </p>
         </div>
@@ -162,15 +162,15 @@ export function ProfileForm({
             placeholder="recovery@example.com"
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 border-t border-border pt-4">
           <Button
             type="submit"
             disabled={savingRecovery || resetEmail.trim() === savedResetEmail}
           >
-            {savingRecovery ? "Saving..." : "Save recovery email"}
+            {savingRecovery ? "Saving…" : "Save recovery email"}
           </Button>
           {recoveryStatus && (
-            <p className="text-sm text-neutral-500">{recoveryStatus}</p>
+            <p className="animate-fade-in text-[13px] text-muted-foreground">{recoveryStatus}</p>
           )}
         </div>
       </form>

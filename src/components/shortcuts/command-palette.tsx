@@ -1,157 +1,125 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, CornerDownLeft } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Command } from "cmdk";
+import { CornerDownLeft, Search } from "lucide-react";
+import { useMemo } from "react";
+import { Kbd } from "@/components/ui/kbd";
 import type { CommandItem } from "./types";
-import { filterCommands, groupCommandsByCategory } from "./command-palette-utils";
-import { CommandPaletteItem } from "./command-palette-item";
+import { groupCommandsByCategory } from "./command-palette-utils";
 
 interface CommandPaletteProps {
-  isOpen: boolean;
-  onClose: () => void;
-  commands: CommandItem[];
+	isOpen: boolean;
+	onClose: () => void;
+	commands: CommandItem[];
 }
 
-function CommandPaletteDialog({
-  onClose,
-  commands,
-}: {
-  onClose: () => void;
-  commands: CommandItem[];
-}) {
-  const [query, setQuery] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const filteredCommands = useMemo(
-    () => filterCommands(commands, query),
-    [commands, query]
-  );
-
-  const activeIndex = Math.min(
-    selectedIndex,
-    Math.max(0, filteredCommands.length - 1)
-  );
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1) % (filteredCommands.length || 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setSelectedIndex(
-        (prev) => (prev - 1 + filteredCommands.length) % (filteredCommands.length || 1)
-      );
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (filteredCommands[activeIndex]) {
-        filteredCommands[activeIndex].perform();
-        onClose();
-      }
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      onClose();
-    }
-  };
-
-  const grouped = useMemo(
-    () => groupCommandsByCategory(filteredCommands),
-    [filteredCommands]
-  );
-
-  let flatIndex = 0;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-neutral-900/40 backdrop-blur-xs animate-in fade-in duration-100">
-      <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
-      <div
-        className="relative w-full max-w-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10"
-        onKeyDown={handleKeyDown}
-      >
-        {/* Search header */}
-        <div className="flex items-center px-4 py-3.5 border-b border-neutral-100 dark:border-neutral-800 gap-3">
-          <Search className="w-5 h-5 text-neutral-400" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelectedIndex(0);
-            }}
-            placeholder="Type a command or search actions..."
-            className="w-full bg-transparent text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 text-[15px] focus:outline-none"
-          />
-          <kbd className="px-2 py-0.5 text-xs font-semibold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-2xs">
-            ESC
-          </kbd>
-        </div>
-
-        {/* Results */}
-        <div className="max-h-80 overflow-y-auto p-2">
-          {filteredCommands.length === 0 ? (
-            <div className="p-8 text-center text-sm text-neutral-400">
-              No matching commands found for &ldquo;{query}&rdquo;
-            </div>
-          ) : (
-            Object.entries(grouped).map(([category, items]) => (
-              <div key={category} className="mb-2 last:mb-0">
-                <div className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                  {category}
-                </div>
-                {items.map((item) => {
-                  const isCurrent = flatIndex === activeIndex;
-                  const itemIndex = flatIndex;
-                  flatIndex++;
-
-                  return (
-                    <CommandPaletteItem
-                      key={item.id}
-                      item={item}
-                      isActive={isCurrent}
-                      onSelect={() => {
-                        item.perform();
-                        onClose();
-                      }}
-                      onHover={() => setSelectedIndex(itemIndex)}
-                    />
-                  );
-                })}
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-4 py-2.5 bg-neutral-50 dark:bg-neutral-950/60 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-400">
-          <div className="flex items-center gap-3">
-            <span>
-              <kbd className="px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 rounded mr-1 text-[10px]">
-                ↑↓
-              </kbd>
-              to navigate
-            </span>
-            <span className="flex items-center">
-              <CornerDownLeft className="w-3 h-3 mr-1 inline" />
-              to select
-            </span>
-          </div>
-          <span className="text-[11px]">Mailflare Actions</span>
-        </div>
-      </div>
-    </div>
-  );
+function ShortcutKeys({ shortcut }: { shortcut: string }) {
+	return (
+		<span className="ml-auto flex shrink-0 items-center gap-1">
+			{shortcut.split(" ").map((key, index) => (
+				<Kbd key={`${key}-${index}`}>{key.toUpperCase()}</Kbd>
+			))}
+		</span>
+	);
 }
 
-export function CommandPalette({
-  isOpen,
-  onClose,
-  commands,
-}: CommandPaletteProps) {
-  if (!isOpen) return null;
-  return <CommandPaletteDialog onClose={onClose} commands={commands} />;
+export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProps) {
+	const grouped = useMemo(() => groupCommandsByCategory(commands), [commands]);
+
+	return (
+		<DialogPrimitive.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+			<DialogPrimitive.Portal>
+				<DialogPrimitive.Overlay className="anim-overlay fixed inset-0 z-50 bg-stone-950/25 backdrop-blur-[2px] dark:bg-black/55" />
+				<DialogPrimitive.Content
+					aria-describedby={undefined}
+					className="anim-pop fixed left-1/2 top-[14vh] z-50 w-[min(640px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-2xl bg-popover text-popover-foreground shadow-float outline-none"
+				>
+					<DialogPrimitive.Title className="sr-only">Command palette</DialogPrimitive.Title>
+					<Command
+						loop
+						className="flex flex-col"
+						filter={(value, search, keywords) => {
+							const haystack = `${value} ${(keywords ?? []).join(" ")}`.toLowerCase();
+							return search
+								.toLowerCase()
+								.split(/\s+/)
+								.filter(Boolean)
+								.every((term) => haystack.includes(term))
+								? 1
+								: 0;
+						}}
+					>
+						<div className="flex items-center gap-3 border-b border-border px-4">
+							<Search className="size-[18px] shrink-0 text-muted-foreground" />
+							<Command.Input
+								autoFocus
+								placeholder="Type a command or search…"
+								className="h-14 w-full bg-transparent text-[15px] text-foreground outline-none placeholder:text-subtle-foreground"
+							/>
+							<Kbd>ESC</Kbd>
+						</div>
+
+						<Command.List className="max-h-[min(420px,60vh)] overflow-y-auto overscroll-contain p-2 transition-[height] duration-150 [&_[cmdk-list-sizer]]:space-y-1">
+							<Command.Empty className="flex flex-col items-center gap-1 px-6 py-12 text-center">
+								<span className="font-display text-xl text-foreground">Nothing found</span>
+								<span className="text-[13px] text-muted-foreground">Try a different word, like “inbox” or “settings”.</span>
+							</Command.Empty>
+							{Object.entries(grouped).map(([category, items]) => (
+								<Command.Group
+									key={category}
+									heading={category}
+									className="[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.06em] [&_[cmdk-group-heading]]:text-subtle-foreground"
+								>
+									{items.map((item) => {
+										const Icon = item.icon;
+										return (
+											<Command.Item
+												key={item.id}
+												value={`${item.title} ${item.id}`}
+												keywords={[item.category, item.subtitle ?? "", ...(item.keywords ?? [])]}
+												onSelect={() => {
+													item.perform();
+													onClose();
+												}}
+												className="group flex h-10 cursor-default select-none items-center gap-3 rounded-lg px-2.5 text-[13.5px] text-foreground outline-none transition-colors data-[selected=true]:bg-accent"
+											>
+												{Icon && (
+													<span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground ring-1 ring-inset ring-border transition-colors group-data-[selected=true]:bg-primary group-data-[selected=true]:text-primary-foreground group-data-[selected=true]:ring-primary">
+														<Icon className="size-3.5" />
+													</span>
+												)}
+												<span className="min-w-0 truncate font-medium">{item.title}</span>
+												{item.subtitle && (
+													<span className="hidden min-w-0 truncate text-muted-foreground sm:inline">{item.subtitle}</span>
+												)}
+												{item.shortcut && <ShortcutKeys shortcut={item.shortcut} />}
+											</Command.Item>
+										);
+									})}
+								</Command.Group>
+							))}
+						</Command.List>
+
+						<div className="flex items-center justify-between border-t border-border bg-elevated/70 px-4 py-2.5 text-xs text-muted-foreground">
+							<div className="flex items-center gap-4">
+								<span className="flex items-center gap-1.5">
+									<Kbd>↑</Kbd>
+									<Kbd>↓</Kbd>
+									navigate
+								</span>
+								<span className="flex items-center gap-1.5">
+									<Kbd>
+										<CornerDownLeft className="size-3" />
+									</Kbd>
+									select
+								</span>
+							</div>
+							<span className="font-display text-[13px] italic text-subtle-foreground">postbox</span>
+						</div>
+					</Command>
+				</DialogPrimitive.Content>
+			</DialogPrimitive.Portal>
+		</DialogPrimitive.Root>
+	);
 }

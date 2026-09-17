@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 import { clearMailboxClientState } from "@/components/mailbox-provider-utils";
 import { BrandingProvider } from "@/components/branding-provider";
 import { NewMessagePopup } from "@/components/new-message-popup";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AnimatePresence } from "motion/react";
 import { useMessagePolling } from "@/hooks/use-message-polling";
 import { clearMessageClientState } from "@/hooks/utils";
 import { clearMessageDetailCache } from "@/lib/messages/detail-cache";
@@ -41,15 +45,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 	return (
 		<QueryClientProvider client={client}>
-			<BrandingProvider>
-				{children}
-				{realtime.notification && (
-					<NewMessagePopup
-						notification={realtime.notification}
-						onDismiss={realtime.dismissNotification}
-					/>
-				)}
-			</BrandingProvider>
+			<ThemeProvider>
+				<TooltipProvider delayDuration={350} skipDelayDuration={150}>
+					<BrandingProvider>
+						{children}
+						<AnimatePresence>
+							{realtime.notification && (
+								<NewMessagePopup
+									key={realtime.notification.messageId}
+									notification={realtime.notification}
+									onDismiss={realtime.dismissNotification}
+								/>
+							)}
+						</AnimatePresence>
+						<Toaster />
+					</BrandingProvider>
+				</TooltipProvider>
+			</ThemeProvider>
 		</QueryClientProvider>
 	);
 }

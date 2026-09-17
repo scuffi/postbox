@@ -116,7 +116,7 @@ export function OnboardingClient() {
 				{ label: "Mailbox", active: step === 2 },
 			]}
 			footer={
-				<span className="inline-flex items-center gap-2 text-neutral-500">
+				<span className="inline-flex items-center gap-2 text-muted-foreground">
 					Setup completes in the inbox
 					<ArrowRight className="h-4 w-4" />
 				</span>
@@ -125,9 +125,9 @@ export function OnboardingClient() {
 			<div className="space-y-5">
 				{step === 1 && (
 					<>
-						<p className="rounded-2xl bg-[#eaf1fb] px-4 py-3 text-sm leading-6 text-neutral-700">
+						<p className="rounded-2xl bg-muted px-4 py-3 text-sm leading-6 text-foreground/80">
 							Your domain must use Cloudflare DNS on the same account as{" "}
-							<code className="no-font-mono text-xs font-semibold text-blue-800">CF_TOKEN</code>.
+							<code className="no-font-mono text-xs font-semibold text-primary-soft-foreground">CF_TOKEN</code>.
 						</p>
 						<div className="space-y-2">
 							<Label htmlFor="domain">Domain</Label>
@@ -145,10 +145,10 @@ export function OnboardingClient() {
 								placeholder="example.com"
 							/>
 						</div>
-						<div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
+						<div className="flex items-center justify-between gap-4 rounded-2xl bg-muted px-4 py-3">
 							<div>
 								<Label htmlFor="onboarding-enable-sending">Enable sending</Label>
-								<p className="mt-1 text-xs leading-5 text-neutral-500">
+								<p className="mt-1 text-xs leading-5 text-muted-foreground">
 									{domainChecking
 										? "Checking Cloudflare access..."
 										: domainCheck
@@ -159,7 +159,7 @@ export function OnboardingClient() {
 								</p>
 							</div>
 							{domainChecking ? (
-								<LoaderCircle className="h-4 w-4 animate-spin text-neutral-500" />
+								<LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />
 							) : (
 								<Switch
 									id="onboarding-enable-sending"
@@ -170,7 +170,7 @@ export function OnboardingClient() {
 							)}
 						</div>
 						{domainCheck && (
-							<div className="flex items-center gap-3 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
+							<div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
 								<CheckCircle2 className="h-4 w-4" />
 								Domain found in Cloudflare as {domainCheck.zone.name}
 							</div>
@@ -178,9 +178,9 @@ export function OnboardingClient() {
 						<Button
 							onClick={addDomain}
 							disabled={!hostname || loading || domainChecking}
-							className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+							size="lg" className="w-full"
 						>
-							{loading ? "Adding..." : "Add domain"}
+							{loading ? "Adding…" : "Add domain"}
 						</Button>
 					</>
 				)}
@@ -195,20 +195,20 @@ export function OnboardingClient() {
 									onChange={(e) => setLocalPart(e.target.value)}
 									className="min-w-0"
 								/>
-								<span className="max-w-36 truncate text-sm font-medium text-neutral-500">@{hostname}</span>
+								<span className="max-w-36 truncate text-sm font-medium text-muted-foreground">@{hostname}</span>
 							</div>
 						</div>
 						<Button
 							onClick={addMailbox}
 							disabled={!localPart || loading}
-							className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+							size="lg" className="w-full"
 						>
-							{loading ? "Creating..." : "Go to inbox"}
+							{loading ? "Creating…" : "Go to inbox"}
 						</Button>
 					</>
 				)}
 				{error && (
-					<p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+					<p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium ring-1 ring-inset ring-red-500/20 text-red-700 dark:text-red-400">
 						{error}
 					</p>
 				)}

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Download } from "lucide-react";
+import { Archive, Download } from "lucide-react";
+import { SettingsCard, SettingsSection } from "@/components/settings/settings-section";
+import { PageHeader } from "@/components/ui/page-header";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { Button } from "@/components/ui/button";
 import type { ExportState } from "./types";
@@ -24,33 +26,36 @@ export default function SettingsExportPage() {
 	}
 
 	return (
-		<div className="space-y-6">
-			{/* <div>
-				<h1 className="text-3xl font-medium text-neutral-900">Export</h1>
-				<p className="mt-1 text-sm text-neutral-500">
-					Download mail from the currently selected mailbox.
-				</p>
-			</div> */}
-
-			<section className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">Export mailbox</h2>
-					<p className="mt-1 text-sm text-neutral-500">
-						Download message headers and bodies from the selected mailbox as an .mbox file.
-						Attachments are not included in this export.
-					</p>
-				</div>
-				<div className="space-y-3 rounded-3xl bg-white p-6">
-					<Button type="button" variant="outline" disabled={!selectedMailbox || exportState.loading} onClick={onExport}>
-						{exportState.loading ? "Preparing..." : "Download .mbox"}
-					</Button>
+		<div>
+			<PageHeader title="Export" description="Take your mail with you. Standard formats, no lock-in." />
+			<SettingsSection title="Export mailbox" description="Message headers and bodies from the inbox selected in the sidebar, as an .mbox file. Attachments are not included.">
+				<SettingsCard>
+					<div className="flex flex-wrap items-center justify-between gap-4">
+						<div className="flex min-w-0 items-center gap-3">
+							<span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground ring-1 ring-inset ring-border">
+								<Archive className="size-[18px]" />
+							</span>
+							<div className="min-w-0">
+								<p className="truncate text-sm font-medium text-foreground">
+									{selectedMailbox ? `${selectedMailbox.localPart}.mbox` : "No inbox selected"}
+								</p>
+								<p className="truncate text-[13px] text-muted-foreground">
+									{selectedMailbox ? `${selectedMailbox.localPart}@${selectedMailbox.hostname}` : "Pick an inbox in the sidebar first."}
+								</p>
+							</div>
+						</div>
+						<Button type="button" variant="secondary" disabled={!selectedMailbox || exportState.loading} onClick={onExport}>
+							<Download />
+							{exportState.loading ? "Preparing…" : "Download .mbox"}
+						</Button>
+					</div>
 					{exportState.error && (
-						<p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+						<p className="mt-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 							{exportState.error}
 						</p>
 					)}
-				</div>
-			</section>
+				</SettingsCard>
+			</SettingsSection>
 		</div>
 	);
 }

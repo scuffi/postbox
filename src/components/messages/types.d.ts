@@ -22,6 +22,8 @@ export type MessageListRowProps = {
 	active?: boolean;
 	compact?: boolean;
 	currentAccountName?: string;
+	/** In the unified view, annotate each row with the mailbox it belongs to. */
+	showMailboxIndicator?: boolean;
 	onSelectedChange: (messageId: string, selected: boolean) => void;
 	onMessageAction: (messageId: string, action: RowMessageAction) => Promise<void>;
 	dragMessageIds: string[];

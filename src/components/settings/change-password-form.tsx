@@ -38,7 +38,8 @@ export function ChangePasswordForm() {
 
 	return (
 		<form onSubmit={onSubmit} className="space-y-4">
-			<div className="space-y-2">
+			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="space-y-2 sm:col-span-2">
 				<Label htmlFor="currentPassword">Current password</Label>
 				<Input
 					id="currentPassword"
@@ -73,11 +74,12 @@ export function ChangePasswordForm() {
 					required
 				/>
 			</div>
-			<div className="flex items-center gap-3">
+			</div>
+			<div className="flex items-center gap-3 border-t border-border pt-4">
 				<Button type="submit" disabled={loading}>
-					{loading ? "Changing..." : "Change password"}
+					{loading ? "Changing…" : "Change password"}
 				</Button>
-				{status && <p className="text-sm text-neutral-500">{status}</p>}
+				{status && <p className="animate-fade-in text-[13px] text-muted-foreground">{status}</p>}
 			</div>
 		</form>
 	);

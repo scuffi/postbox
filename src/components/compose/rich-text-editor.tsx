@@ -144,8 +144,8 @@ export function RichTextEditor({
 					onPaste={onPaste}
 					onKeyDown={onKeyDown}
 					className={cn(
-						"email-body max-w-none px-4 py-3 text-sm text-neutral-900 outline-none",
-						"min-h-32 empty:before:pointer-events-none empty:before:text-neutral-400 empty:before:content-[attr(data-placeholder)]",
+						"email-body max-w-none px-4 py-4 text-foreground outline-none",
+						"min-h-32 empty:before:pointer-events-none empty:before:text-subtle-foreground empty:before:content-[attr(data-placeholder)]",
 						disabled && "cursor-not-allowed opacity-60",
 					)}
 				/>
@@ -155,21 +155,21 @@ export function RichTextEditor({
 							type="button"
 							onClick={() => setShowQuoted((open) => !open)}
 							aria-expanded={showQuoted}
-							className="rounded-full border border-neutral-200 bg-neutral-100 px-2 text-xs leading-5 text-neutral-500 hover:bg-neutral-200"
+							className="rounded-full bg-muted px-2 text-xs leading-5 text-muted-foreground ring-1 ring-inset ring-border transition-colors hover:bg-accent hover:text-foreground"
 							title={showQuoted ? "Hide quoted text" : "Show quoted text"}
 						>
 							•••
 						</button>
 						{showQuoted && (
 							<div
-								className="email-body mt-2 max-w-none border-l-2 border-neutral-200 pl-3 text-sm text-neutral-600"
+								className="email-body mt-2 max-w-none border-l-2 border-border-strong pl-3 text-sm text-muted-foreground"
 								dangerouslySetInnerHTML={{ __html: quotedHtml }}
 							/>
 						)}
 					</div>
 				)}
 			</div>
-			<div className="relative flex items-center gap-0.5 border-t border-neutral-100 px-4 py-3">
+			<div className="relative flex items-center gap-0.5 overflow-x-auto border-t border-border bg-elevated/60 px-3 py-2.5 scrollbar-none">
 				{toolbarStart}
 				{COMMANDS.map((item) => (
 					<Tooltip key={item.command} label={item.label}>
@@ -181,11 +181,11 @@ export function RichTextEditor({
 							onMouseDown={(event) => event.preventDefault()}
 							onClick={() => run(item.command, item.value)}
 							className={cn(
-								"rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900",
-								active[item.command] && "bg-neutral-200 text-neutral-900",
+								"flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+								active[item.command] && "bg-accent text-foreground ring-1 ring-inset ring-border",
 							)}
 						>
-							<item.icon className="h-4 w-4" />
+							<item.icon className="size-4" />
 						</button>
 					</Tooltip>
 				))}
@@ -196,9 +196,9 @@ export function RichTextEditor({
 						disabled={disabled}
 						onMouseDown={(event) => event.preventDefault()}
 						onClick={openLink}
-						className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+						className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					>
-						<Link2 className="h-4 w-4" />
+						<Link2 className="size-4" />
 					</button>
 				</Tooltip>
 				<Tooltip label="Clear formatting">
@@ -208,15 +208,15 @@ export function RichTextEditor({
 						disabled={disabled}
 						onMouseDown={(event) => event.preventDefault()}
 						onClick={() => run("removeFormat")}
-						className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+						className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					>
-						<RemoveFormatting className="h-4 w-4" />
+						<RemoveFormatting className="size-4" />
 					</button>
 				</Tooltip>
 				{toolbarEnd}
 				{linkOpen && (
 					<form
-						className="absolute bottom-full left-2 z-10 mb-1 flex items-center gap-2 rounded-lg border border-neutral-200 bg-white p-2 shadow-lg"
+						className="anim-pop absolute bottom-full left-2 z-10 mb-2 flex items-center gap-1.5 rounded-xl bg-popover p-1.5 shadow-float" data-state="open"
 						onSubmit={(event) => {
 							event.preventDefault();
 							applyLink();
@@ -230,9 +230,9 @@ export function RichTextEditor({
 								if (event.key === "Escape") setLinkOpen(false);
 							}}
 							placeholder="https://example.com"
-							className="h-8 w-64 rounded-md border border-neutral-200 px-2 text-sm outline-none focus:border-blue-400"
+							className="h-8 w-64 rounded-lg bg-muted px-2.5 text-[13px] text-foreground outline-none ring-1 ring-inset ring-border placeholder:text-subtle-foreground focus:ring-ring/40"
 						/>
-						<button type="submit" className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+						<button type="submit" className="h-8 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground transition-[filter] hover:brightness-110">
 							Apply
 						</button>
 					</form>

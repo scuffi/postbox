@@ -1,74 +1,68 @@
 import { AlertTriangle, Check } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { getDnsRecordLabel } from "./domain-dns-details-utils";
 import type { DomainDnsDetailsProps } from "./types";
 
+function RecordRow({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+	return (
+		<li className="flex items-start gap-3 px-4 py-2.5">
+			<span
+				className={cn(
+					"mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
+					ok ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+				)}
+			>
+				{ok ? <Check className="size-2.5" strokeWidth={3} /> : <AlertTriangle className="size-2.5" strokeWidth={3} />}
+			</span>
+			<span className="min-w-0 break-all font-mono text-[12.5px] leading-5 text-foreground/85">{children}</span>
+		</li>
+	);
+}
+
 export default function DomainDnsDetails({ domain, dns }: DomainDnsDetailsProps) {
 	return (
-		<Card className="rounded-3xl border-0 bg-white p-6">
-			<CardHeader className="py-0">
-				<CardTitle>DNS — {domain.hostname}</CardTitle>
-			</CardHeader>
-			<CardContent className="gap-6 pt-5">
-				<section className="space-y-3">
-					<h2 className="text-sm font-medium text-neutral-900">Email Routing</h2>
-					<ul className="space-y-2">
+		<section className="animate-fade-up overflow-hidden rounded-2xl border border-border bg-card">
+			<header className="border-b border-border bg-elevated/60 px-5 py-4">
+				<p className="text-[11px] font-medium uppercase tracking-[0.07em] text-subtle-foreground">DNS records</p>
+				<h2 className="mt-0.5 text-[15px] font-semibold text-foreground">{domain.hostname}</h2>
+			</header>
+			<div className="grid divide-y divide-border lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+				<div>
+					<h3 className="px-4 pb-1 pt-4 text-[13px] font-semibold text-foreground">Email Routing</h3>
+					<ul className="pb-2">
 						{dns.routing.records.map((record, index) => (
-							<li
-								key={`routing-${record.type}-${record.name}-${index}`}
-								className="flex items-start gap-2 rounded-xl bg-green-50 px-3 py-2 text-sm text-green-800"
-							>
-								<Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-								<span className="break-all">{getDnsRecordLabel(record)}</span>
-							</li>
+							<RecordRow key={`routing-${record.type}-${record.name}-${index}`} ok>
+								{getDnsRecordLabel(record)}
+							</RecordRow>
 						))}
 						{dns.routing.missing.map((record, index) => (
-							<li
-								key={`missing-${record.type}-${record.name}-${index}`}
-								className="flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800"
-							>
-								<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
-								<span className="break-all">{getDnsRecordLabel(record)}</span>
-							</li>
+							<RecordRow key={`missing-${record.type}-${record.name}-${index}`} ok={false}>
+								{getDnsRecordLabel(record)}
+							</RecordRow>
 						))}
 						{dns.routing.records.length === 0 && dns.routing.missing.length === 0 && (
-							<li className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${domain.routingEnabled ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
-								{domain.routingEnabled ? (
-									<Check className="h-4 w-4 shrink-0 text-green-600" />
-								) : (
-									<AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
-								)}
-								{domain.routingEnabled ? "Email routing is configured" : "No routing DNS records found"}
-							</li>
+							<RecordRow ok={!!domain.routingEnabled}>
+								<span className="font-sans">{domain.routingEnabled ? "Email routing is configured" : "No routing DNS records found"}</span>
+							</RecordRow>
 						)}
 					</ul>
-				</section>
-
-				<section className="space-y-3 mt-8">
-					<h2 className="text-sm font-medium text-neutral-900">Email Sending</h2>
-					<ul className="space-y-2">
+				</div>
+				<div>
+					<h3 className="px-4 pb-1 pt-4 text-[13px] font-semibold text-foreground">Email Sending</h3>
+					<ul className="pb-2">
 						{dns.sending.map((record, index) => (
-							<li
-								key={`sending-${record.type}-${record.name}-${index}`}
-								className="flex items-start gap-2 rounded-xl bg-green-50 px-3 py-2 text-sm text-green-800"
-							>
-								<Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-								<span className="break-all">{getDnsRecordLabel(record)}</span>
-							</li>
+							<RecordRow key={`sending-${record.type}-${record.name}-${index}`} ok>
+								{getDnsRecordLabel(record)}
+							</RecordRow>
 						))}
 						{dns.sending.length === 0 && (
-							<li className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${domain.sendingEnabled ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
-								{domain.sendingEnabled ? (
-									<Check className="h-4 w-4 shrink-0 text-green-600" />
-								) : (
-									<AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
-								)}
-								{domain.sendingEnabled ? "Email sending is configured" : "No sending DNS records found"}
-							</li>
+							<RecordRow ok={!!domain.sendingEnabled}>
+								<span className="font-sans">{domain.sendingEnabled ? "Email sending is configured" : "No sending DNS records found"}</span>
+							</RecordRow>
 						)}
 					</ul>
-				</section>
-			</CardContent>
-		</Card>
+				</div>
+			</div>
+		</section>
 	);
 }

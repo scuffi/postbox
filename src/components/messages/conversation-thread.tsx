@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
+import { AnimatePresence, motion } from "motion/react";
 import { ChevronsUpDown, Paperclip } from "lucide-react";
 import { ContactAvatar } from "@/components/contacts/contact-avatar";
 import { runSingleMessageAction } from "@/components/message-actions/utils";
@@ -46,10 +47,10 @@ export function ConversationThread({
 	return (
 		<section
 			aria-label={position === "before" ? "Earlier messages in this conversation" : "Later messages in this conversation"}
-			className={cn(position === (latestMessagesFirst ? "before" : "after") ? "pb-6" : "")}
+			className="mt-6"
 		>
-			<ol className={cn(!collapsed && "divide-y divide-neutral-200/50", latestMessagesFirst ? "border-y" : "border-b", "border-neutral-200")}>
-				<li className={"border-t-0" }>
+			<ol className="relative flex flex-col gap-2">
+				<li>
 					<ConversationMessageCard
 						message={firstMessage}
 						mailboxId={mailboxId}
@@ -59,19 +60,17 @@ export function ConversationThread({
 					/>
 				</li>
 				{collapsed ? (
-					<li className="flex items-center justify-center gap-1 py-2 text-center border-y border-neutral-100 h-px my-4">
-						<span className="bg-white px-6 flex flex-row items-center gap-2">
-							<span className="text-sm font-medium text-neutral-600">{collapsedLabel}</span>
-							<button
-								type="button"
-								onClick={() => onExpandedAllChange(true)}
-								aria-label={`Expand ${collapsedLabel}`}
-								title={`Expand ${collapsedLabel}`}
-								className="inline-flex h-6 w-6 items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
-							>
-								<ChevronsUpDown className="h-4 w-4" />
-							</button>
-						</span>
+					<li className="relative flex items-center justify-center py-1">
+						<span className="absolute inset-x-6 top-1/2 h-px bg-[repeating-linear-gradient(90deg,var(--border-strong)_0_4px,transparent_4px_8px)]" />
+						<button
+							type="button"
+							onClick={() => onExpandedAllChange(true)}
+							aria-label={`Expand ${collapsedLabel}`}
+							className="relative inline-flex h-7 items-center gap-1.5 rounded-full bg-card px-3 text-xs font-medium text-muted-foreground shadow-[0_0_0_1px_var(--border-strong),0_1px_2px_rgb(0_0_0/0.05)] transition-all hover:-translate-y-px hover:text-foreground hover:shadow-panel"
+						>
+							<ChevronsUpDown className="size-3.5" />
+							{collapsedLabel}
+						</button>
 					</li>
 				) : (
 					middleMessages.map((message) => (
@@ -132,8 +131,13 @@ export function ConversationMessageCard({
 	}
 
 	return (
-		<article className={cn("bg-white transition-colors px-6", !expanded && "hover:bg-neutral-50")}>
-			<div className="flex w-full items-start gap-3 py-3">
+		<article
+			className={cn(
+				"rounded-2xl border border-border bg-card px-4 transition-[box-shadow,border-color,background-color] duration-200 sm:px-5",
+				expanded ? "shadow-[0_1px_2px_rgb(0_0_0/0.03)]" : "bg-elevated/50 hover:border-border-strong hover:bg-card",
+			)}
+		>
+			<div className="flex w-full items-center gap-3 py-3">
 				<button
 					type="button"
 					onClick={() => {
@@ -144,7 +148,7 @@ export function ConversationMessageCard({
 						void runSingleMessageAction(message.id, "read").catch(() => setLocallyRead(false));
 					}}
 					aria-expanded={expanded}
-					className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
+					className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left outline-none"
 				>
 					<ContactAvatar
 						mailboxId={mailboxId}
@@ -154,21 +158,23 @@ export function ConversationMessageCard({
 						managedAvatarUrl={outbound && mailboxId ? `/api/mailboxes/${mailboxId}/avatar` : undefined}
 					/>
 					<span className="min-w-0 flex-1">
-						<div className="flex flex-col">
-							<span className={cn("truncate text-sm font-semibold mt-1", locallyRead || outbound ? "text-neutral-900" : "font-semibold text-neutral-900")}>
+						<span className="flex min-w-0 items-baseline gap-1.5">
+							<span className={cn("truncate text-[13.5px]", locallyRead || outbound ? "font-medium text-foreground" : "font-semibold text-foreground")}>
 								{sender}
-								{expanded && <span className="text-xs ml-1 opacity-50 font-normal">&lt;{senderEmail}&gt;</span>}
 							</span>
-							{expanded && recipients && <span className="text-xs font-normal text-neutral-500">to {recipients}</span>}
-						</div>
-						{!expanded && (
-							<span className={clsx( !locallyRead ? "font-semibold" : "text-neutral-500", "block truncate text-[13px]")}>{message.snippet || "No preview"}</span>
-						)}
+							{!locallyRead && !outbound && <span className="size-1.5 shrink-0 self-center rounded-full bg-primary" />}
+							{expanded && <span className="truncate text-xs text-muted-foreground">{senderEmail}</span>}
+						</span>
+						{expanded && recipients ? (
+							<span className="block truncate text-xs text-muted-foreground">to {recipients}</span>
+						) : !expanded ? (
+							<span className={clsx(!locallyRead ? "text-foreground/80" : "text-muted-foreground", "block truncate text-[13px]")}>{message.snippet || "No preview"}</span>
+						) : null}
 					</span>
 				</button>
-				<span className="flex shrink-0 items-center gap-2 text-xs mr-2 mt-2">
-					{attachments.length > 0 && <Paperclip className="h-3.5 w-3.5" aria-label={`${attachments.length} attachments`} />}
-					{dayjs(message.createdAt).format("MMM DD, YYYY, hh:mmA")}
+				<span className="flex shrink-0 items-center gap-2 text-xs tabular-nums text-subtle-foreground">
+					{attachments.length > 0 && <Paperclip className="size-3.5" aria-label={`${attachments.length} attachments`} />}
+					{dayjs(message.createdAt).format("D MMM, HH:mm")}
 				</span>
 				<ThreadMessageActions
 					message={message}
@@ -177,30 +183,42 @@ export function ConversationMessageCard({
 					ownAddresses={ownAddresses}
 				/>
 			</div>
-			{expanded && body && (
-				<div className="pb-4 pt-2">
-					{body.html ? (
-						<div className="email-body max-w-none text-sm text-neutral-900" dangerouslySetInnerHTML={{ __html: body.html }} />
-					) : (
-						<pre className="whitespace-pre-wrap font-sans text-sm text-neutral-900">{body.text}</pre>
-					)}
-					{attachments.length > 0 && (
-						<ul className="mt-4 flex flex-wrap gap-2">
-							{attachments.map((attachment) => (
-								<li key={attachment.id}>
-									<a
-										href={`/api/messages/${message.id}/attachments/${attachment.id}`}
-										className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-700 hover:bg-neutral-50"
-									>
-										<Paperclip className="h-3 w-3" />
-										<span className="max-w-48 truncate">{attachment.filename}</span>
-									</a>
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
-			)}
+			<AnimatePresence initial={false}>
+				{expanded && body && (
+					<motion.div
+						initial={{ height: 0, opacity: 0 }}
+						animate={{ height: "auto", opacity: 1 }}
+						exit={{ height: 0, opacity: 0 }}
+						transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+						className="overflow-hidden"
+					>
+						<div className="pb-5 pt-1">
+							{body.html ? (
+								<div className="email-paper">
+									<div className="email-body max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: body.html }} />
+								</div>
+							) : (
+								<pre className="whitespace-pre-wrap font-sans text-[15px] leading-relaxed text-foreground">{body.text}</pre>
+							)}
+							{attachments.length > 0 && (
+								<ul className="mt-4 flex flex-wrap gap-2">
+									{attachments.map((attachment) => (
+										<li key={attachment.id}>
+											<a
+												href={`/api/messages/${message.id}/attachments/${attachment.id}`}
+												className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-muted px-2.5 text-xs font-medium text-foreground/80 ring-1 ring-inset ring-border transition-colors hover:bg-accent hover:text-foreground"
+											>
+												<Paperclip className="size-3" />
+												<span className="max-w-48 truncate">{attachment.filename}</span>
+											</a>
+										</li>
+									))}
+								</ul>
+							)}
+						</div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 		</article>
 	);
 }

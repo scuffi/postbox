@@ -1,11 +1,19 @@
 "use client";
 
-import { Archive, Mail, MailOpen, ShieldAlert, Trash2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Archive, ChevronDown, FolderInput, Mail, MailOpen, ShieldAlert, Trash2, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tooltip } from "@/components/ui/tooltip";
-import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
+import { cn } from "@/lib/utils";
 import type { BulkMessageToolbarProps } from "./types";
+
+const toolButton =
+	"flex h-8 items-center justify-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4";
 
 export function BulkMessageToolbar({
 	selectedCount,
@@ -16,61 +24,84 @@ export function BulkMessageToolbar({
 	pending,
 }: BulkMessageToolbarProps) {
 	return (
-		<div className="flex min-w-0 items-center gap-2 text-neutral-600 w-full">
+		<div className="flex min-w-0 items-center gap-0.5">
 			{!hideSelectedCount && (
-				<span className="mr-2 text-sm font-medium text-neutral-800">
-					{selectedCount} selected
+				<span className="mr-1.5 flex h-8 items-center gap-2 rounded-lg bg-foreground px-2.5 text-[13px] font-medium text-background">
+					<AnimatePresence mode="popLayout" initial={false}>
+						<motion.span
+							key={selectedCount}
+							initial={{ y: 8, opacity: 0 }}
+							animate={{ y: 0, opacity: 1 }}
+							exit={{ y: -8, opacity: 0 }}
+							className="tabular-nums"
+						>
+							{selectedCount}
+						</motion.span>
+					</AnimatePresence>
+					selected
 				</span>
 			)}
 			<Tooltip label="Archive">
-				<Button variant="ghost" size="sm" onClick={() => onAction("archive")} disabled={pending} aria-label="Archive">
-					<Archive className="h-4 w-4" />
-				</Button>
-			</Tooltip>
-			<Tooltip label="Report spam">
-				<Button variant="ghost" size="sm" onClick={() => onAction("spam")} disabled={pending} aria-label="Report spam">
-					<ShieldAlert className="h-4 w-4" />
-				</Button>
-			</Tooltip>
-			<Tooltip label="Delete">
-				<Button variant="ghost" size="sm" onClick={() => onAction("trash")} disabled={pending} aria-label="Delete">
-					<Trash2 className="h-4 w-4" />
-				</Button>
+				<button type="button" className={toolButton} onClick={() => onAction("archive")} disabled={pending} aria-label="Archive">
+					<Archive />
+					<span className="hidden sm:inline">Archive</span>
+				</button>
 			</Tooltip>
 			<Tooltip label={hasUnreadSelection ? "Mark as read" : "Mark as unread"}>
-				<Button
-					variant="ghost"
-					size="sm"
+				<button
+					type="button"
+					className={toolButton}
 					onClick={() => onAction(hasUnreadSelection ? "read" : "unread")}
 					disabled={pending}
 					aria-label={hasUnreadSelection ? "Mark as read" : "Mark as unread"}
 				>
-					{hasUnreadSelection ? <MailOpen className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
-				</Button>
+					{hasUnreadSelection ? <MailOpen /> : <Mail />}
+				</button>
 			</Tooltip>
-			<span className="flex-1" />
-			<Tooltip label="Move selected messages">
-					<Select
-						className="bg-white text-xs font-medium py-2 text-neutral-700 outline-none"
-						disabled={pending}
-						defaultValue=""
-						aria-label="Move selected messages"
-						onChange={(event) => {
-							if (!event.target.value) return;
-							onAction(event.target.value as BulkMessageAction);
-							event.target.value = "";
-						}}
-					>
-						<option value="">Move to</option>
-						<option value="archive">Archived</option>
-						<option value="spam">Spam</option>
-						<option value="trash">Trash</option>
-					</Select>
+			<Tooltip label="Report spam">
+				<button type="button" className={toolButton} onClick={() => onAction("spam")} disabled={pending} aria-label="Report spam">
+					<ShieldAlert />
+				</button>
 			</Tooltip>
-			<Tooltip label="Clear selection">
-				<Button variant="ghost" size="sm" onClick={onClearSelection} disabled={pending} aria-label="Clear selection">
-					<X className="h-4 w-4" />
-				</Button>
+			<Tooltip label="Delete">
+				<button
+					type="button"
+					className={cn(toolButton, "hover:bg-destructive/10 hover:text-destructive")}
+					onClick={() => onAction("trash")}
+					disabled={pending}
+					aria-label="Delete"
+				>
+					<Trash2 />
+				</button>
+			</Tooltip>
+			<span className="mx-1 h-5 w-px bg-border" />
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<button type="button" className={toolButton} disabled={pending} aria-label="Move selected messages">
+						<FolderInput />
+						Move
+						<ChevronDown className="!size-3.5 opacity-60" />
+					</button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" side="top" className="min-w-[10rem]">
+					<DropdownMenuItem onSelect={() => onAction("archive")}>
+						<Archive />
+						Archived
+					</DropdownMenuItem>
+					<DropdownMenuItem onSelect={() => onAction("spam")}>
+						<ShieldAlert />
+						Spam
+					</DropdownMenuItem>
+					<DropdownMenuItem destructive onSelect={() => onAction("trash")}>
+						<Trash2 />
+						Trash
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<Tooltip label="Clear selection" shortcut="Esc">
+				<button type="button" className={toolButton} onClick={onClearSelection} disabled={pending} aria-label="Clear selection">
+					<X />
+				</button>
 			</Tooltip>
 		</div>
 	);

@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Label } from "@/components/ui/label";
+import { ListCard, listRowClassName } from "@/components/ui/list-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { Tooltip } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { authFetch } from "@/lib/auth/client";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
@@ -111,111 +117,141 @@ export default function CalendarPage() {
     setAdding(true);
   }
   return (
-    <div className="mx-auto max-w-5xl p-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-3 text-2xl font-semibold text-neutral-900">
-            <CalendarDays className="h-7 w-7 text-blue-600" />
-            Calendar
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            Your upcoming events and meeting invitations.
-          </p>
-        </div>
-        <Button disabled={pendingAction !== null} onClick={() => { setEditing(null); setAdding(true); }}>
-          <Plus className="h-4 w-4" />
-          New event
-        </Button>
-      </div>
-      {adding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/35 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-semibold">{editing ? "Edit event" : "Create event"}</h2>
-            <div className="mt-5 grid gap-3">
+    <div className="mx-auto max-w-4xl px-5 py-8 sm:px-8 lg:py-10">
+      <PageHeader
+        title="Calendar"
+        description="Your upcoming events and meeting invitations."
+        actions={
+          <Button disabled={pendingAction !== null} onClick={() => { setEditing(null); setAdding(true); }}>
+            <Plus />
+            New event
+          </Button>
+        }
+      />
+      <Dialog
+        open={adding}
+        onOpenChange={(open) => {
+          if (open || pendingAction === "save") return;
+          setEditing(null);
+          setAdding(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit event" : "New event"}</DialogTitle>
+            <DialogDescription>Guests receive an invitation by email.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="event-title">Title</Label>
               <Input
+                id="event-title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Event title"
+                placeholder="Quarterly planning"
+                autoFocus
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="event-guests">Guests</Label>
               <Input
+                id="event-guests"
                 value={guests}
                 onChange={(event) => setGuests(event.target.value)}
-                placeholder="Add guests (comma-separated emails)"
+                placeholder="maya@example.com, sam@acme.dev"
               />
-              <div className="grid grid-cols-2 gap-3">
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="event-starts">Starts</Label>
                 <Input
+                  id="event-starts"
                   type="datetime-local"
                   value={startsAt}
                   onChange={(event) => setStartsAt(event.target.value)}
                   aria-label="Start date and time"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="event-ends">Ends</Label>
                 <Input
+                  id="event-ends"
                   type="datetime-local"
                   value={endsAt}
                   onChange={(event) => setEndsAt(event.target.value)}
                   aria-label="End date and time"
                 />
               </div>
-              <div className="mt-2 flex justify-end gap-2">
-                <Button variant="ghost" disabled={pendingAction === "save"} onClick={() => { setEditing(null); setAdding(false); }}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => void addEvent()}
-                  disabled={!title || !startsAt || !endsAt || pendingAction === "save"}
-                >
-                  {pendingAction === "save" ? (editing ? "Saving..." : "Creating...") : (editing ? "Save changes" : "Create event")}
-                </Button>
-              </div>
             </div>
           </div>
-        </div>
-      )}
-      <div className="overflow-hidden rounded-xl border border-neutral-200">
-        {events.length === 0 ? (
-          <p className="p-8 text-center text-sm text-neutral-500">
-            No events this month.
-          </p>
-        ) : (
-          events.map((event) => (
-            <div
-              key={event.id}
-              className="flex items-center gap-5 border-b border-neutral-100 px-5 py-4 last:border-b-0"
+          <DialogFooter>
+            <Button variant="ghost" disabled={pendingAction === "save"} onClick={() => { setEditing(null); setAdding(false); }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void addEvent()}
+              disabled={!title || !startsAt || !endsAt || pendingAction === "save"}
             >
-              <div className="w-36">
-                <span>{new Date(event.startsAt).toLocaleDateString()}</span>
-                <time className="text-xs text-neutral-500 flex flex-col">
-                  <span>{new Date(event.startsAt).toLocaleTimeString()}</span>
-                </time>
+              {pendingAction === "save" ? (editing ? "Saving…" : "Creating…") : (editing ? "Save changes" : "Create event")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <ListCard>
+        {events.length === 0 ? (
+          <EmptyState
+            icon={CalendarDays}
+            title="A clear month"
+            description="No events yet. Create one, or accept an invitation from your inbox."
+          />
+        ) : (
+          events.map((event) => {
+            const start = new Date(event.startsAt);
+            return (
+              <div key={event.id} className={listRowClassName}>
+                <div className="flex w-12 shrink-0 flex-col items-center overflow-hidden rounded-xl bg-card text-center ring-1 ring-inset ring-border">
+                  <span className="w-full bg-primary py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+                    {start.toLocaleDateString(undefined, { month: "short" })}
+                  </span>
+                  <span className="py-1 text-lg font-semibold leading-none tabular-nums text-foreground">{start.getDate()}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">{event.title}</p>
+                  <p className="truncate text-[13px] text-muted-foreground">
+                    {start.toLocaleDateString(undefined, { weekday: "long" })} · {start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    {event.location && ` · ${event.location}`}
+                  </p>
+                </div>
+                <div className="flex items-center opacity-60 transition-opacity group-hover:opacity-100">
+                  <Tooltip label="Edit">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Edit event"
+                      disabled={pendingAction !== null}
+                      onClick={() => void editEvent(event)}
+                    >
+                      <Pencil />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Delete">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Delete event"
+                      className="hover:bg-destructive/10 hover:text-destructive"
+                      disabled={pendingAction !== null}
+                      onClick={() => void deleteEvent(event.id)}
+                    >
+                      <Trash2 />{pendingAction === event.id && <span className="sr-only">Deleting…</span>}
+                    </Button>
+                  </Tooltip>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-medium text-neutral-900">{event.title}</p>
-                {event.location && (
-                  <p className="text-sm text-neutral-500">{event.location}</p>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="Edit event"
-                disabled={pendingAction !== null}
-                onClick={() => void editEvent(event)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="Delete event"
-                disabled={pendingAction !== null}
-                onClick={() => void deleteEvent(event.id)}
-              >
-                <Trash2 className="h-4 w-4" />{pendingAction === event.id && <span className="sr-only">Deleting...</span>}
-              </Button>
-            </div>
-          ))
+            );
+          })
         )}
-      </div>
+      </ListCard>
     </div>
   );
 }

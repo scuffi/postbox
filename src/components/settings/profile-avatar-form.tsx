@@ -96,7 +96,7 @@ export function ProfileAvatarForm({
 				type="button"
 				onClick={() => inputRef.current?.click()}
 				disabled={busy}
-				className="group relative h-24 w-24 overflow-hidden rounded-full border border-neutral-200 bg-blue-600 text-white shadow-sm outline-none ring-blue-500 transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
+				className="group relative size-16 overflow-hidden rounded-full bg-gradient-to-br from-stone-700 to-stone-900 text-white shadow-panel outline-none ring-ring/40 transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait dark:from-stone-300 dark:to-stone-500 dark:text-stone-900"
 				aria-label={hasAvatar ? `Change ${name} profile picture` : `Upload ${name} profile picture`}
 			>
 				{hasAvatar ? (
@@ -109,7 +109,7 @@ export function ProfileAvatarForm({
 					/>
 				) : (
 					<span className="flex h-full w-full items-center justify-center">
-						<User className="h-9 w-9" />
+						<User className="size-6" />
 					</span>
 				)}
 				<span className="absolute inset-0 flex items-center justify-center bg-neutral-950/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -117,13 +117,13 @@ export function ProfileAvatarForm({
 						<LoaderCircle className="h-6 w-6 animate-spin" />
 					) : (
 						<span className="flex flex-col items-center gap-1 text-[11px] font-medium">
-							<Camera className="h-5 w-5" />
+							<Camera className="size-4" />
 							{hasAvatar ? "Change" : "Upload"}
 						</span>
 					)}
 				</span>
 			</button>
-			{status && <p className="max-w-xs text-xs text-red-600">{status}</p>}
+			{status && <p className="max-w-xs text-xs text-destructive">{status}</p>}
 		</div>
 	);
 }

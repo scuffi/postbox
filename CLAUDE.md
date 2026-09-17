@@ -122,8 +122,18 @@ The admin overview dispatches `deploy-update.yml` (constant in `src/app/api/admi
 - Types and pure helpers are split out of components and modules into sibling `*-types.d.ts` and `*-utils.ts` files (41 and 27 of them respectively). Follow this when adding anything non-trivial.
 - Server code reaches bindings through `getEnv()` / `getEnvAsync()` in `src/lib/cloudflare.ts`, then `getDb(env)` from `src/db`. Never import `getCloudflareContext` directly.
 - API routes return `NextResponse.json({ error: "..." }, { status })` for failures; there is no shared error envelope helper.
-- UI is Tailwind v4 + shadcn/Radix primitives in `src/components/ui/`. `DialogContent` sets no max height, so a tall dialog overflows the viewport with an unreachable submit button — add `max-h-[calc(100vh-4rem)] overflow-y-auto` on any dialog with more than a few fields.
+- UI is Tailwind v4 + Radix primitives in `src/components/ui/`. `DialogContent` caps its height and scrolls, and `DialogFooter` bleeds to the dialog edges for the action row.
 - `cloudflare-env.d.ts` is generated (500KB) — regenerate with `cf-typegen`, never hand-edit.
+
+## Design system
+
+- Tokens live in `src/app/globals.css`: warm neutrals on a `canvas`, pillar-box red `primary` (#DA202A) with `primary-soft`, and a `gold` accent (stars). Prefer tokens (`bg-card`, `text-muted-foreground`, `text-subtle-foreground`, `border-border-strong`, `shadow-panel`, `shadow-float`) over raw palette classes; add a `dark:` variant whenever a raw colour is unavoidable. Tailwind's `blue-*` scale is remapped to red for legacy classes.
+- Type: Geist for UI, `font-display` (Instrument Serif) for page titles and empty states only.
+- Shell: `AppShell` (`src/components/app-shell.tsx`) puts the sidebar on the canvas and content in one raised panel; below `lg` the sidebar is a drawer. Sidebars compose `SidebarFrame` + `SidebarSection` + `NavItem`; the active item is a shared `motion` `layoutId` pill.
+- Building blocks: `PageHeader`/`SectionHeader`, `ListCard` + `listRowClassName` for admin collections, `EmptyState`, `Segmented`, `Kbd`, `DropdownMenu`, `Popover`, `Tooltip` (Radix; needs the global `TooltipProvider` in `Providers`), `toast` from `@/components/ui/toaster` (sonner), the `data-table` utility for tables, and `SettingsSection`/`SettingsCard` for settings screens. The command palette is `cmdk`.
+- Overlays animate through the `anim-overlay`, `anim-dialog` and `anim-pop` utilities keyed on Radix `data-state`, so exits animate too. Don't animate `transform` on a wrapper around `position: fixed` content (it becomes the containing block).
+- HTML email is rendered inside `.email-paper`, which puts it on a light sheet in dark mode because most mail hardcodes dark text.
+- Brand: `BrandMark`/`BrandLockup` (`src/components/brand/postbox-mark.tsx`) fall back to the pillar-box glyph unless custom branding sets an icon; `PillarBoxIllustration` + `PillarBoxStage` are the auth and landing hero.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

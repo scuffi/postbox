@@ -40,15 +40,15 @@ export function ForwardingEmailForm({ initialForwardingEmail }: ForwardingEmailF
 					type="email"
 					placeholder="destination@example.com"
 				/>
-				<p className="text-xs leading-5 text-neutral-500">
+				<p className="text-xs leading-5 text-muted-foreground">
 					Incoming mail will also be sent to this verified Cloudflare Email Routing destination.
 				</p>
 			</div>
-			<div className="flex items-center gap-3">
+			<div className="flex items-center gap-3 border-t border-border pt-4">
 				<Button type="submit" disabled={saving || forwardingEmail.trim() === savedForwardingEmail}>
-					{saving ? "Saving..." : "Save forwarding"}
+					{saving ? "Saving…" : "Save forwarding"}
 				</Button>
-				{status && <p className="text-sm text-neutral-500">{status}</p>}
+				{status && <p className="animate-fade-in text-[13px] text-muted-foreground">{status}</p>}
 			</div>
 		</form>
 	);

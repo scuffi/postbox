@@ -1,14 +1,12 @@
 "use client";
 
 import { ComposeForm } from "@/components/compose/compose-form";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function ComposePage() {
 	return (
-		<div className="h-full overflow-auto p-8">
-			<div className="mb-6">
-				<h1 className="text-2xl font-normal text-neutral-900">Compose</h1>
-				<p className="mt-1 text-sm text-neutral-500">Write a new email. Drafts save automatically.</p>
-			</div>
+		<div className="mx-auto h-full w-full max-w-4xl overflow-auto px-5 py-8 sm:px-8 lg:py-10">
+			<PageHeader title="New message" description="Drafts save automatically as you write." />
 			<ComposeForm mode="page" />
 		</div>
 	);

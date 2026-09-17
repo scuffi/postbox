@@ -1,118 +1,75 @@
 "use client";
 
-import React from "react";
-import { X, Keyboard } from "lucide-react";
+import { Keyboard } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Kbd } from "@/components/ui/kbd";
 import type { ShortcutDefinition } from "./types";
 
 interface ShortcutsHelpDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  shortcuts: ShortcutDefinition[];
+	isOpen: boolean;
+	onClose: () => void;
+	shortcuts: ShortcutDefinition[];
 }
 
-export function ShortcutsHelpDialog({
-  isOpen,
-  onClose,
-  shortcuts,
-}: ShortcutsHelpDialogProps) {
-  if (!isOpen) return null;
+function formatKeys(shortcut: ShortcutDefinition): string[] {
+	const parts: string[] = [];
+	for (const modifier of shortcut.modifiers ?? []) {
+		if (modifier === "ctrl") parts.push("Ctrl");
+		if (modifier === "meta") parts.push("⌘");
+		if (modifier === "alt") parts.push("⌥");
+		if (modifier === "shift") parts.push("⇧");
+	}
+	// A shortcut listing both ⌘ and Ctrl means "either", so show the platform-neutral pair once.
+	const unique = parts.includes("⌘") && parts.includes("Ctrl") ? ["⌘"] : parts;
+	return [...unique, ...shortcut.key.split(" ").map((key) => (key === "escape" ? "Esc" : key.toUpperCase()))];
+}
 
-  const grouped = shortcuts.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, ShortcutDefinition[]>);
+export function ShortcutsHelpDialog({ isOpen, onClose, shortcuts }: ShortcutsHelpDialogProps) {
+	const grouped = shortcuts.reduce(
+		(acc, item) => {
+			if (!acc[item.category]) acc[item.category] = [];
+			if (!acc[item.category].some((existing) => existing.label === item.label)) acc[item.category].push(item);
+			return acc;
+		},
+		{} as Record<string, ShortcutDefinition[]>,
+	);
 
-  const formatKey = (shortcut: ShortcutDefinition) => {
-    const parts: string[] = [];
-    if (shortcut.modifiers) {
-      shortcut.modifiers.forEach((m) => {
-        if (m === "ctrl") parts.push("Ctrl");
-        if (m === "meta") parts.push("⌘");
-        if (m === "alt") parts.push("Alt");
-        if (m === "shift") parts.push("Shift");
-      });
-    }
-    parts.push(shortcut.key.toUpperCase());
-    return parts.join(" + ");
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-xs animate-in fade-in duration-100">
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div className="relative w-full max-w-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 max-h-[85vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 dark:border-neutral-800">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 bg-blue-50 dark:bg-blue-950/50 text-blue-600 rounded-lg">
-              <Keyboard className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                Keyboard Shortcuts
-              </h2>
-              <p className="text-xs text-neutral-400">
-                Superhuman &amp; Gmail style quick keys
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Categories */}
-        <div className="overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(grouped).map(([category, items]) => (
-            <div key={category} className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 border-b border-neutral-100 dark:border-neutral-800/80 pb-1.5">
-                {category}
-              </h3>
-              <div className="space-y-2">
-                {items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-neutral-700 dark:text-neutral-300">
-                      {item.label}
-                    </span>
-                    <kbd className="px-2 py-0.5 text-xs font-mono font-medium text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-2xs">
-                      {formatKey(item)}
-                    </kbd>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-3 bg-neutral-50 dark:bg-neutral-950/60 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-400">
-          <span>
-            Press{" "}
-            <kbd className="px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded font-mono">
-              ?
-            </kbd>{" "}
-            to toggle
-          </span>
-          <span>
-            Press{" "}
-            <kbd className="px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded font-mono">
-              ESC
-            </kbd>{" "}
-            to close
-          </span>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+			<DialogContent className="w-[min(720px,calc(100vw-32px))] p-0">
+				<DialogHeader className="mb-0 flex flex-row items-center gap-3 border-b border-border px-6 py-5">
+					<span className="flex size-9 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground">
+						<Keyboard className="size-[18px]" />
+					</span>
+					<div className="space-y-0.5">
+						<DialogTitle>Keyboard shortcuts</DialogTitle>
+						<DialogDescription>Move through mail without touching the mouse.</DialogDescription>
+					</div>
+				</DialogHeader>
+				<div className="grid gap-x-10 gap-y-7 px-6 py-6 md:grid-cols-2">
+					{Object.entries(grouped).map(([category, items]) => (
+						<section key={category}>
+							<h3 className="mb-2 text-[11px] font-medium uppercase tracking-[0.06em] text-subtle-foreground">{category}</h3>
+							<ul className="space-y-0.5">
+								{items.map((item) => (
+									<li key={`${item.key}-${item.label}`} className="-mx-2 flex h-8 items-center justify-between gap-4 rounded-lg px-2 text-[13px] hover:bg-accent/60">
+										<span className="truncate text-foreground/85">{item.label}</span>
+										<span className="flex shrink-0 items-center gap-1">
+											{formatKeys(item).map((key, index) => (
+												<Kbd key={`${key}-${index}`}>{key}</Kbd>
+											))}
+										</span>
+									</li>
+								))}
+							</ul>
+						</section>
+					))}
+				</div>
+				<div className="flex items-center justify-between border-t border-border bg-elevated/60 px-6 py-3 text-xs text-muted-foreground">
+					<span className="flex items-center gap-1.5">Press <Kbd>?</Kbd> to toggle</span>
+					<span className="flex items-center gap-1.5">Press <Kbd>Esc</Kbd> to close</span>
+				</div>
+			</DialogContent>
+		</Dialog>
+	);
 }

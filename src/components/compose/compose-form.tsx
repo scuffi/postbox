@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileText, Forward, Minimize2, Paperclip, Reply, Trash2, X } from "lucide-react";
+import { CalendarClock, Check, FileText, Forward, Maximize2, Minus, Paperclip, PenLine, Reply, SendHorizontal, Trash2, X } from "lucide-react";
+import { toast as showToast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -62,21 +61,36 @@ export function ComposeForm({
 	const [loadedDraftMailboxId, setLoadedDraftMailboxId] = useState<string | null>(null);
 	const [loadedDraftFrom, setLoadedDraftFrom] = useState<string | null>(null);
 	const [selectedFrom, setSelectedFrom] = useState("");
+	const [fallbackMailboxId, setFallbackMailboxId] = useState<string | null>(null);
 	const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const draftGeneration = useRef(0);
 	const attachmentInput = useRef<HTMLInputElement | null>(null);
 	const previousSignature = useRef("");
+	const [minimized, setMinimized] = useState(false);
+
+	// Surface form feedback through the app-wide toaster.
+	useEffect(() => {
+		if (!toast) return;
+		if (toast.type === "success") showToast.success(toast.message);
+		else showToast.error(toast.message);
+	}, [toast]);
 
 	useEffect(() => {
 		if (!selectedMailbox && mailboxes.length === 1) setSelectedMailbox(mailboxes[0]);
 	}, [mailboxes, selectedMailbox, setSelectedMailbox]);
 
+	// When the unified inbox is selected, composing still needs a concrete
+	// "from" mailbox. Fall back to the primary (or first) mailbox without
+	// changing the global selection, so the inbox stays in the unified view.
+	const primaryMailbox = mailboxes.find((mailbox) => mailbox.isPrimary) ?? mailboxes[0] ?? null;
+	const effectiveMailbox = selectedMailbox ?? mailboxes.find((mailbox) => mailbox.id === fallbackMailboxId) ?? primaryMailbox;
+
 	const senderAddresses = useMemo(() => {
-		if (!selectedMailbox) return [];
-		return selectedMailbox.senderAddresses?.length
-			? selectedMailbox.senderAddresses
-			: [`${selectedMailbox.localPart}@${selectedMailbox.hostname}`];
-	}, [selectedMailbox]);
+		if (!effectiveMailbox) return [];
+		return effectiveMailbox.senderAddresses?.length
+			? effectiveMailbox.senderAddresses
+			: [`${effectiveMailbox.localPart}@${effectiveMailbox.hostname}`];
+	}, [effectiveMailbox]);
 	const senderOptions = useMemo(
 		() => mailboxes.flatMap((mailbox) => {
 			const addresses = mailbox.senderAddresses?.length
@@ -86,8 +100,8 @@ export function ComposeForm({
 		}),
 		[mailboxes],
 	);
-	const fromAddr = selectedMailbox && selectedFrom
-		? formatEmailAddress(selectedFrom, selectedMailbox.displayName)
+	const fromAddr = effectiveMailbox && selectedFrom
+		? formatEmailAddress(selectedFrom, effectiveMailbox.displayName)
 		: "";
 
 	useEffect(() => {
@@ -167,14 +181,14 @@ export function ComposeForm({
 
 	useEffect(() => {
 		if (loadingDraft) return;
-		const nextSignature = selectedMailbox?.signature ?? "";
+		const nextSignature = effectiveMailbox?.signature ?? "";
 		setHtml((current) => applyMailboxSignatureHtml(current, previousSignature.current, nextSignature));
 		previousSignature.current = nextSignature;
-	}, [loadingDraft, selectedMailbox?.id, selectedMailbox?.signature]);
+	}, [loadingDraft, effectiveMailbox?.id, effectiveMailbox?.signature]);
 
 	useEffect(() => {
 		const bodyContent = htmlToPlainText(html).trim();
-		const signatureOnly = bodyContent === (selectedMailbox?.signature?.trim() ?? "");
+		const signatureOnly = bodyContent === (effectiveMailbox?.signature?.trim() ?? "");
 		const hasContent =
 			to.length > 0 || cc.length > 0 || bcc.length > 0 || subject.trim() || quotedHtml || (bodyContent && !signatureOnly);
 		if (!fromAddr || !hasContent || loadingDraft) return;
@@ -183,7 +197,7 @@ export function ComposeForm({
 		const generation = draftGeneration.current;
 		saveTimer.current = setTimeout(async () => {
 			const payload = {
-				mailboxId: selectedMailbox?.id,
+				mailboxId: effectiveMailbox?.id,
 				from: fromAddr,
 				to: recipientsToHeader(to),
 				cc: recipientsToHeader(cc),
@@ -213,7 +227,7 @@ export function ComposeForm({
 		return () => {
 			if (saveTimer.current) clearTimeout(saveTimer.current);
 		};
-	}, [bcc, cc, draftId, fromAddr, html, loadingDraft, quotedHtml, selectedMailbox?.id, selectedMailbox?.signature, subject, threading, to]);
+	}, [bcc, cc, draftId, fromAddr, html, loadingDraft, quotedHtml, effectiveMailbox?.id, effectiveMailbox?.signature, subject, threading, to]);
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -243,7 +257,7 @@ export function ComposeForm({
 				subject,
 				text: htmlToPlainText(fullHtml),
 				html: fullHtml,
-				mailboxId: selectedMailbox?.id,
+				mailboxId: effectiveMailbox?.id,
 				threading: threading ?? undefined,
 				draftId: storedAttachments.length > 0 ? draftId : null,
 				scheduledAt,
@@ -271,7 +285,7 @@ export function ComposeForm({
 		setThreading(null);
 		setStoredAttachments([]);
 		setSubject("");
-		setHtml(applyMailboxSignatureHtml("", "", selectedMailbox?.signature));
+		setHtml(applyMailboxSignatureHtml("", "", effectiveMailbox?.signature));
 		setQuotedHtml(null);
 		setAttachments([]);
 		setScheduledAt(null);
@@ -302,7 +316,7 @@ export function ComposeForm({
 		setThreading(null);
 		setStoredAttachments([]);
 		setSubject("");
-		setHtml(applyMailboxSignatureHtml("", "", selectedMailbox?.signature));
+		setHtml(applyMailboxSignatureHtml("", "", effectiveMailbox?.signature));
 		setQuotedHtml(null);
 		setAttachments([]);
 		setScheduledAt(null);
@@ -361,61 +375,104 @@ export function ComposeForm({
 		const option = senderOptions.find((item) => `${item.mailbox.id}|${item.address}` === value);
 		if (!option) return;
 		setSelectedFrom(option.address);
-		if (selectedMailbox?.id !== option.mailbox.id) setSelectedMailbox(option.mailbox);
+		if (selectedMailbox) setSelectedMailbox(option.mailbox);
+		else setFallbackMailboxId(option.mailbox.id);
 	}
+
+	const composerTitle = loadingDraft
+		? "Loading draft…"
+		: threading?.inReplyTo
+			? "Reply"
+			: /^fwd?:/i.test(subject)
+				? "Forward"
+				: subject.trim() || "New message";
+	const TitleIcon = threading?.inReplyTo ? Reply : /^fwd?:/i.test(subject) ? Forward : PenLine;
 
 	const frameClass =
 		mode === "popup"
-			? "fixed bottom-4 right-4 z-40 flex h-[min(520px,calc(100vh-88px))] w-[min(560px,calc(100vw-32px))] flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-2xl"
-			: "flex h-full min-h-[720px] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm";
+			? cn(
+				"flex flex-col overflow-hidden bg-popover shadow-float transition-[width,height,border-radius] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:rounded-2xl",
+				minimized
+					? "h-12 w-[min(340px,100vw)] rounded-t-2xl"
+					: "h-[min(640px,100dvh)] w-full rounded-t-2xl sm:h-[min(600px,calc(100dvh-88px))] sm:w-[min(620px,calc(100vw-32px))]",
+			)
+			: "flex h-full min-h-[680px] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-panel";
+
+	const chipClass =
+		"group/chip flex max-w-full items-center gap-2 rounded-lg bg-muted py-1 pl-1 pr-1.5 text-[13px] ring-1 ring-inset ring-border";
 
 	return (
-		<>
-			{toast && (
-				<div
-					className={cn(
-						"fixed right-6 top-6 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-lg",
-						toast.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white",
-					)}
-				>
-					{toast.message}
-				</div>
-			)}
-			<form onSubmit={onSubmit} className={frameClass}>
-				<div className="flex h-9 items-center justify-between bg-neutral-800 px-4 text-sm font-medium text-white">
-					<span className="flex items-center gap-2">
-						{threading?.inReplyTo && <Reply className="h-3.5 w-3.5 text-neutral-300" />}
-						{!threading?.inReplyTo && /^fwd?:/i.test(subject) && <Forward className="h-3.5 w-3.5 text-neutral-300" />}
-						{loadingDraft
-							? "Loading draft"
-							: threading?.inReplyTo
-								? "Reply"
-								: /^fwd?:/i.test(subject)
-									? "Forward"
-									: draftId
-										? "Draft saved"
-										: "New Message"}
+		<form
+			onSubmit={onSubmit}
+			onKeyDown={(event) => {
+				if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+					event.preventDefault();
+					event.currentTarget.requestSubmit();
+				}
+			}}
+			className={frameClass}
+		>
+			<div
+				className={cn(
+					"flex h-12 shrink-0 items-center gap-2 border-b border-border pl-4 pr-2",
+					mode === "popup" && minimized && "cursor-pointer border-b-0",
+				)}
+				onClick={mode === "popup" && minimized ? () => setMinimized(false) : undefined}
+			>
+				<span className="flex size-6 items-center justify-center rounded-md bg-primary-soft text-primary-soft-foreground">
+					<TitleIcon className="size-3.5" />
+				</span>
+				<span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold tracking-[-0.01em] text-foreground">
+					{composerTitle}
+				</span>
+				{draftId && !loadingDraft && (
+					<span className="hidden items-center gap-1 text-[11.5px] text-subtle-foreground sm:flex">
+						<Check className="size-3" />
+						Saved
 					</span>
-					{mode === "popup" && (
-						<div className="flex items-center gap-3 text-neutral-300">
-							<Minimize2 className="h-4 w-4" />
-							<button type="button" onClick={onClose}>
-								<X className="h-4 w-4" />
+				)}
+				{mode === "popup" && (
+					<div className="flex items-center">
+						<Tooltip label={minimized ? "Expand" : "Minimise"}>
+							<button
+								type="button"
+								onClick={(event) => {
+									event.stopPropagation();
+									setMinimized((value) => !value);
+								}}
+								className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								aria-label={minimized ? "Expand composer" : "Minimise composer"}
+							>
+								{minimized ? <Maximize2 className="size-3.5" /> : <Minus className="size-4" />}
 							</button>
-						</div>
-					)}
-				</div>
-				<div className="border-b border-neutral-100 px-4 py-1 flex flex-row items-center">
-					<Label htmlFor={`${mode}-from`} className="text-sm text-neutral-500">From</Label>
+						</Tooltip>
+						<Tooltip label="Close" shortcut="Esc">
+							<button
+								type="button"
+								onClick={(event) => {
+									event.stopPropagation();
+									onClose?.();
+								}}
+								className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+								aria-label="Close composer"
+							>
+								<X className="size-4" />
+							</button>
+						</Tooltip>
+					</div>
+				)}
+			</div>
+			<div className={cn("flex min-h-0 flex-1 flex-col", mode === "popup" && minimized && "hidden")}>
+				<div className="flex h-11 items-center gap-2 border-b border-border px-4">
+					<Label htmlFor={`${mode}-from`} className="w-9 shrink-0 text-[13px] font-normal text-subtle-foreground">From</Label>
 					<Select
 						id={`${mode}-from`}
-						value={selectedMailbox && selectedFrom ? `${selectedMailbox.id}|${selectedFrom}` : ""}
+						value={effectiveMailbox && selectedFrom ? `${effectiveMailbox.id}|${selectedFrom}` : ""}
 						onChange={(event) => selectSender(event.target.value)}
-						// placeholder="Select a mailbox first"
 						required
 						disabled={loadingDraft || senderOptions.length === 0}
-						className="h-8 px-0 py-1 text-sm shadow-none focus-visible:ring-0"
-						containerClassName="border-0 flex-1"
+						className="h-8 border-0 bg-transparent pl-0 text-[13.5px] font-medium shadow-none hover:border-0 focus-visible:ring-0 dark:bg-transparent"
+						containerClassName="flex-1"
 					>
 						{senderOptions.length === 0 && <option value="">Select a mailbox first</option>}
 						{senderOptions.map(({ mailbox, address }) => (
@@ -434,12 +491,12 @@ export function ComposeForm({
 					trailing={
 						<>
 							{!showCc && (
-								<button type="button" className="rounded px-1 hover:text-neutral-800" onClick={() => setShowCc(true)}>
+								<button type="button" className="rounded-md px-1.5 py-0.5 font-medium transition-colors hover:bg-accent hover:text-foreground" onClick={() => setShowCc(true)}>
 									Cc
 								</button>
 							)}
 							{!showBcc && (
-								<button type="button" className="rounded px-1 hover:text-neutral-800" onClick={() => setShowBcc(true)}>
+								<button type="button" className="rounded-md px-1.5 py-0.5 font-medium transition-colors hover:bg-accent hover:text-foreground" onClick={() => setShowBcc(true)}>
 									Bcc
 								</button>
 							)}
@@ -468,16 +525,16 @@ export function ComposeForm({
 						autoFocus={!loadingDraft && bcc.length === 0}
 					/>
 				)}
-				<div className="border-b border-neutral-100 px-4 py-1">
+				<div className="border-b border-border px-4">
 					<Label htmlFor={`${mode}-subject`} className="sr-only">Subject</Label>
-					<Input
+					<input
 						id={`${mode}-subject`}
 						value={subject}
 						onChange={(event) => setSubject(event.target.value)}
 						placeholder="Subject"
 						required
 						disabled={loadingDraft}
-						className="h-8 border-0 px-0 py-1 shadow-none focus-visible:ring-0"
+						className="h-12 w-full bg-transparent text-[15px] font-semibold tracking-[-0.01em] text-foreground outline-none placeholder:font-medium placeholder:text-subtle-foreground disabled:opacity-50"
 					/>
 				</div>
 				<Label htmlFor={`${mode}-text`} className="sr-only">Body</Label>
@@ -487,30 +544,29 @@ export function ComposeForm({
 					onChange={setHtml}
 					quotedHtml={quotedHtml}
 					disabled={loadingDraft}
-					placeholder="Write your message"
+					placeholder="Write your message…"
 					toolbarStart={
-						<>
-							<div className="flex items-center">
-								<Button
+						<div className="mr-2 flex items-center rounded-xl shadow-button">
+							<Tooltip label={scheduledAt ? "Schedule send" : "Send"} shortcut="⌘↵">
+								<button
 									type="submit"
-									size="sm"
 									disabled={loading || loadingDraft || !fromAddr}
-									className="rounded-r-none px-4"
+									className="flex h-8 items-center gap-1.5 rounded-l-xl bg-gradient-to-b from-[color-mix(in_oklab,var(--primary)_90%,white)] to-primary pl-3.5 pr-3 text-[13px] font-medium text-primary-foreground transition-[filter] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-50"
 								>
-									{loading ? "Sending" : scheduledAt ? "Schedule" : "Send"}
-								</Button>
-								<ScheduleSendMenu
-									disabled={loading || loadingDraft || !fromAddr}
-									value={scheduledAt}
-									onChange={setScheduledAt}
-								/>
-							</div>
-						</>
+									{scheduledAt ? <CalendarClock className="size-3.5" /> : <SendHorizontal className="size-3.5" />}
+									{loading ? "Sending…" : scheduledAt ? "Schedule" : "Send"}
+								</button>
+							</Tooltip>
+							<ScheduleSendMenu
+								disabled={loading || loadingDraft || !fromAddr}
+								value={scheduledAt}
+								onChange={setScheduledAt}
+							/>
+						</div>
 					}
 					toolbarEnd={
 						<>
-							{/* <span className="mx-1 h-5 w-px bg-neutral-200" /> */}
-							<Input
+							<input
 								ref={attachmentInput}
 								type="file"
 								multiple
@@ -523,55 +579,52 @@ export function ComposeForm({
 									aria-label="Attach files"
 									onClick={() => attachmentInput.current?.click()}
 									disabled={loading || loadingDraft}
-									className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:pointer-events-none disabled:opacity-50"
+									className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
 								>
-									<Paperclip className="h-4 w-4" />
+									<Paperclip className="size-4" />
 								</button>
 							</Tooltip>
 							<span className="flex-1" />
-							<Tooltip label="Delete draft">
+							<Tooltip label="Discard draft">
 								<button
 									type="button"
 									aria-label="Delete draft"
 									onClick={() => void deleteDraftAndClose()}
 									disabled={loading || loadingDraft || deletingDraft}
-									className="rounded-md p-1.5 text-neutral-500 hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-50"
+									className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
 								>
-									<Trash2 className="h-4 w-4" />
+									<Trash2 className="size-4" />
 								</button>
 							</Tooltip>
 						</>
 					}
 				/>
 				{(attachments.length > 0 || storedAttachments.length > 0) && (
-					<div className="flex flex-wrap gap-2 border-t border-neutral-100 px-4 py-3">
+					<div className="flex max-h-28 flex-wrap gap-2 overflow-y-auto border-t border-border px-4 py-3">
 						{storedAttachments.map((attachment) => (
-							<div
-								key={attachment.id}
-								className="flex max-w-full items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm"
-								title="Carried over from the forwarded message"
-							>
-								<FileText className="h-4 w-4 shrink-0 text-neutral-500" />
-								<span className="max-w-48 truncate">{attachment.filename}</span>
-								<span className="text-xs text-neutral-400">{formatAttachmentSize(attachment.size)}</span>
+							<div key={attachment.id} className={chipClass} title="Carried over from the forwarded message">
+								<span className="flex size-6 items-center justify-center rounded-md bg-card text-muted-foreground ring-1 ring-inset ring-border">
+									<FileText className="size-3.5" />
+								</span>
+								<span className="max-w-44 truncate font-medium text-foreground">{attachment.filename}</span>
+								<span className="text-xs tabular-nums text-subtle-foreground">{formatAttachmentSize(attachment.size)}</span>
 								<button
 									type="button"
 									onClick={() => void removeStoredAttachment(attachment.id)}
-									className="rounded-full p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700"
+									className="flex size-5 items-center justify-center rounded-md text-subtle-foreground transition-colors hover:bg-accent hover:text-foreground"
 								>
-									<X className="h-3.5 w-3.5" />
+									<X className="size-3.5" />
 									<span className="sr-only">Remove attachment</span>
 								</button>
 							</div>
 						))}
 						{attachments.map((attachment) => (
-							<div
-								key={attachment.id}
-								className="flex max-w-full items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm"
-							>
-								<FileText className="h-4 w-4 shrink-0 text-neutral-500" />
-								<span className="max-w-48 truncate">{attachment.file.name}</span>
-								<span className="text-xs text-neutral-400">
+							<div key={attachment.id} className={chipClass}>
+								<span className="flex size-6 items-center justify-center rounded-md bg-card text-muted-foreground ring-1 ring-inset ring-border">
+									<FileText className="size-3.5" />
+								</span>
+								<span className="max-w-44 truncate font-medium text-foreground">{attachment.file.name}</span>
+								<span className="text-xs tabular-nums text-subtle-foreground">
 									{formatAttachmentSize(attachment.file.size)}
 								</span>
 								<button
@@ -581,16 +634,16 @@ export function ComposeForm({
 											current.filter((item) => item.id !== attachment.id),
 										)
 									}
-									className="rounded-full p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700"
+									className="flex size-5 items-center justify-center rounded-md text-subtle-foreground transition-colors hover:bg-accent hover:text-foreground"
 								>
-									<X className="h-3.5 w-3.5" />
+									<X className="size-3.5" />
 									<span className="sr-only">Remove attachment</span>
 								</button>
 							</div>
 						))}
 					</div>
 				)}
-			</form>
-		</>
+			</div>
+		</form>
 	);
 }

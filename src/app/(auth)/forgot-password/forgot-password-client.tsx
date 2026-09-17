@@ -46,7 +46,7 @@ export function ForgotPasswordClient() {
 					: "Enter the address you sign in with. We will send a reset link to the recovery email on the account."
 			}
 			footer={
-				<Link href="/login" className="text-sm text-neutral-500 hover:text-neutral-800">
+				<Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
 					Back to sign in
 				</Link>
 			}
@@ -58,11 +58,11 @@ export function ForgotPasswordClient() {
 						<Input id="email" name="email" type="email" autoComplete="email" required autoFocus />
 					</div>
 					{error && (
-						<p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</p>
+						<p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium ring-1 ring-inset ring-red-500/20 text-red-700 dark:text-red-400">{error}</p>
 					)}
 					<TurnstileField resetSignal={turnstileReset} />
-					<Button type="submit" className="h-11 w-full rounded-full px-6 active:scale-[0.98]" disabled={loading}>
-						{loading ? "Sending..." : "Send reset link"}
+					<Button type="submit" size="lg" className="w-full" disabled={loading}>
+						{loading ? "Sending…" : "Send reset link"}
 					</Button>
 				</form>
 			)}

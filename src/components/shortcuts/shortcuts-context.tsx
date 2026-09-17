@@ -14,8 +14,20 @@ import {
   MailPlus,
   Settings,
   HelpCircle,
+  Sun,
+  Moon,
+  Monitor,
+  CalendarDays,
+  Globe2,
+  Mail,
+  Route,
+  Users,
+  ShieldCheck,
+  Download,
+  Upload,
 } from "lucide-react";
 import { useCompose } from "@/components/compose/compose-context";
+import { useTheme } from "@/components/theme-provider";
 import type { ShortcutDefinition, CommandItem } from "./types";
 import { useHotkeys } from "./use-hotkeys";
 import { CommandPalette } from "./command-palette";
@@ -58,6 +70,7 @@ export function ShortcutsProvider({
 }) {
   const router = useRouter();
   const { openComposer } = useCompose();
+  const { setTheme } = useTheme();
   const {
     enabled: shortcutsEnabled,
     error: shortcutsPreferenceError,
@@ -287,6 +300,99 @@ export function ShortcutsProvider({
         perform: () => router.push("/settings/account"),
       },
       {
+        id: "settings-inbox",
+        title: "Inbox Settings",
+        subtitle: "Threading, signatures & auto-reply",
+        category: "Settings",
+        icon: Mail,
+        perform: () => router.push("/settings/inbox"),
+      },
+      {
+        id: "settings-rules",
+        title: "Rules & Routing",
+        category: "Settings",
+        icon: Route,
+        perform: () => router.push("/settings/rules"),
+      },
+      {
+        id: "settings-import",
+        title: "Import mail",
+        category: "Settings",
+        icon: Upload,
+        perform: () => router.push("/settings/import"),
+      },
+      {
+        id: "settings-export",
+        title: "Export mail",
+        category: "Settings",
+        icon: Download,
+        perform: () => router.push("/settings/export"),
+      },
+      {
+        id: "nav-calendar",
+        title: "Open Calendar",
+        category: "Navigation",
+        icon: CalendarDays,
+        perform: () => router.push("/calendar"),
+      },
+      {
+        id: "admin-overview",
+        title: "Admin overview",
+        subtitle: "Workspace health & updates",
+        category: "Settings",
+        icon: ShieldCheck,
+        keywords: ["admin"],
+        perform: () => router.push("/admin"),
+      },
+      {
+        id: "admin-domains",
+        title: "Manage domains",
+        category: "Settings",
+        icon: Globe2,
+        keywords: ["admin", "dns"],
+        perform: () => router.push("/domains"),
+      },
+      {
+        id: "admin-mailboxes",
+        title: "Manage mailboxes",
+        category: "Settings",
+        icon: Mail,
+        keywords: ["admin", "addresses"],
+        perform: () => router.push("/mailboxes"),
+      },
+      {
+        id: "admin-accounts",
+        title: "Manage accounts",
+        category: "Settings",
+        icon: Users,
+        keywords: ["admin", "users"],
+        perform: () => router.push("/accounts"),
+      },
+      {
+        id: "theme-light",
+        title: "Switch to light theme",
+        category: "General",
+        icon: Sun,
+        keywords: ["appearance", "mode"],
+        perform: () => setTheme("light"),
+      },
+      {
+        id: "theme-dark",
+        title: "Switch to dark theme",
+        category: "General",
+        icon: Moon,
+        keywords: ["appearance", "mode"],
+        perform: () => setTheme("dark"),
+      },
+      {
+        id: "theme-system",
+        title: "Use system theme",
+        category: "General",
+        icon: Monitor,
+        keywords: ["appearance", "mode"],
+        perform: () => setTheme("system"),
+      },
+      {
         id: "show-help",
         title: "Keyboard Shortcuts Cheat Sheet",
         subtitle: "View all quick keys",
@@ -298,7 +404,7 @@ export function ShortcutsProvider({
     ];
 
     return [...builtins, ...customCommands];
-  }, [router, openComposer, customCommands]);
+  }, [router, openComposer, customCommands, setTheme]);
 
   return (
     <ShortcutsContext.Provider

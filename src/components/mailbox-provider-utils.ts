@@ -7,6 +7,8 @@ let mailboxesRequest: Promise<MailboxOption[]> | null = null;
 let mailboxesRequestSessionToken: string | null = null;
 let cacheGeneration = 0;
 export const SELECTED_MAILBOX_STORAGE_KEY = "selected-mailbox-id";
+/** Sentinel stored in localStorage when the user is viewing the unified inbox. */
+export const ALL_MAILBOXES_ID = "all";
 
 /**
  * The primary mailbox is the one at the account address; it is the only mailbox

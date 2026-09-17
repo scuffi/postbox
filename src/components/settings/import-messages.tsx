@@ -58,9 +58,9 @@ export function ImportMessages({ destination, sourceLabel }: ImportMessagesProps
 							accept=".eml,.mbox,.mbx,message/rfc822,application/mbox"
 							multiple
 							onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
-							className="block w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm shadow-neutral-200/50 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm file:font-medium"
+							className="block h-10 w-full cursor-pointer rounded-lg border border-input bg-card px-1.5 py-1.5 text-[13px] text-muted-foreground shadow-[0_1px_2px_rgb(0_0_0/0.03)] transition-colors hover:border-border-strong file:mr-3 file:h-7 file:cursor-pointer file:rounded-md file:border-0 file:bg-muted file:px-3 file:text-[13px] file:font-medium file:text-foreground dark:bg-muted/40"
 						/>
-						<p className="text-xs leading-5 text-neutral-500">
+						<p className="text-xs leading-5 text-muted-foreground">
 							Imports up to 100 messages and 25 MB per upload. Duplicate Message-ID values are skipped.
 						</p>
 					</div>
@@ -70,7 +70,7 @@ export function ImportMessages({ destination, sourceLabel }: ImportMessagesProps
 					</Button>
 
 					{result && (
-						<div className="rounded-lg border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">
+						<div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
 							<p className="font-medium">{getImportSummary(result)}</p>
 							{(result.errors ?? []).length > 0 && (
 								<ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
@@ -83,7 +83,7 @@ export function ImportMessages({ destination, sourceLabel }: ImportMessagesProps
 					)}
 
 					{error && (
-						<p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+						<p className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
 							{error}
 						</p>
 					)}

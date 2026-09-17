@@ -19,6 +19,9 @@ export type Message = {
 	fromContactName?: string | null;
 	fromContactHasAvatar?: boolean;
 	toContactName?: string | null;
+	/** Mailbox the message belongs to, resolved for the unified ("all mailboxes") view. */
+	accountName?: string | null;
+	accountAddress?: string | null;
 	subject: string | null;
 	snippet: string | null;
 	textBody?: string | null;

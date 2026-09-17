@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/ui/page-header";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { Folder, Server, Upload } from "lucide-react";
@@ -185,24 +186,17 @@ export default function SettingsImportPage() {
   return (
     <div className="space-y-6">
       {/* <div>
-        <h1 className="text-3xl font-medium text-neutral-900">Import</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h1 className="font-display text-[40px] leading-[1.05] text-foreground">Import</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Move mail from selected source sections into the matching sections of
           the current mailbox.
         </p>
       </div> */}
 
+      <PageHeader title="Import" description="Bring mail in from a backup file or another IMAP server." className="mb-2" />
       <section className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold text-neutral-900">
-            Import mailbox
-          </h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            Choose what to import and how Mailflare should receive it.
-          </p>
-        </div>
-        <div className="space-y-1 overflow-hidden rounded-3xl">
-          <CardContent className="space-y-6 rounded-b-lg rounded-t-3xl bg-white p-6">
+        <div className="space-y-1 overflow-hidden rounded-2xl">
+          <CardContent className="space-y-6 rounded-2xl border border-border bg-card p-5 sm:p-6">
             <div className="flex flex-col gap-2">
               <Label htmlFor="import-source">Import source</Label>
               <Select
@@ -211,8 +205,7 @@ export default function SettingsImportPage() {
                 onChange={(event) =>
                   setActiveTab(event.target.value as ImportTab)
                 }
-                className="text-sm w-full py-2"
-                // className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 shadow-sm shadow-neutral-200/50 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                containerClassName="w-full"
               >
                 <option value="file">Backup File</option>
                 <option value="imap">IMAP</option>
@@ -225,18 +218,18 @@ export default function SettingsImportPage() {
                 <button
                   type="button"
                   onClick={() => setSourceDropdownOpen((open) => !open)}
-                  className="flex w-full items-center justify-between rounded-md border border-neutral-200 bg-white px-3 py-2 text-left text-sm shadow-sm shadow-neutral-200/50"
+                  className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-input bg-card px-3 text-left text-sm shadow-[0_1px_2px_rgb(0_0_0/0.03)] transition-colors hover:border-border-strong dark:bg-muted/40"
                 >
-                  <label className="flex-1">Selected</label>
+                  <span className="flex-1 text-muted-foreground">Selected</span>
                   <span className="truncate">{sourceSummary}</span>
-                  <span className="text-neutral-400 px-2">▾</span>
+                  <span className="px-1 text-subtle-foreground">▾</span>
                 </button>
                 {sourceDropdownOpen && (
-                  <div className="absolute z-20 mt-2 w-full rounded-xl border border-neutral-200 bg-white p-2 shadow-lg">
+                  <div className="anim-pop absolute z-20 mt-2 w-full rounded-xl bg-popover p-1 shadow-float" data-state="open">
                     {importSourceOptions.map((option) => (
                       <label
                         key={option.value}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                        className="flex h-9 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-[13px] text-foreground hover:bg-accent"
                       >
                         <Checkbox
                           checked={selectedSections.includes(option.value)}
@@ -250,9 +243,9 @@ export default function SettingsImportPage() {
                   </div>
                 )}
               </div>
-              {/* <p className="text-xs leading-5 text-neutral-500">
+              {/* <p className="text-xs leading-5 text-muted-foreground">
             Select Folders to import every source IMAP folder into matching
-            Mailflare folders.
+            postbox folders.
           </p> */}
             </div>
 
@@ -269,16 +262,16 @@ export default function SettingsImportPage() {
                       onChange={(event) =>
                         setFiles(Array.from(event.target.files ?? []))
                       }
-                      className="block w-full rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm shadow-sm shadow-neutral-200/50 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm file:font-medium"
+                      className="block h-10 w-full cursor-pointer rounded-lg border border-input bg-card px-1.5 py-1.5 text-[13px] text-muted-foreground shadow-[0_1px_2px_rgb(0_0_0/0.03)] transition-colors hover:border-border-strong file:mr-3 file:h-7 file:cursor-pointer file:rounded-md file:border-0 file:bg-muted file:px-3 file:text-[13px] file:font-medium file:text-foreground dark:bg-muted/40"
                     />
-                    <p className="text-xs leading-5 text-neutral-500">
+                    <p className="text-xs leading-5 text-muted-foreground">
                       Upload exported .eml or .mbox files. File exports do not
                       reliably include source section metadata, so files are
                       imported once into {fileImportSource.label}
                     </p>
                   </div>
                   {selectedSections.includes("others") && (
-                    <p className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                    <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
                       Other folders can be imported automatically from IMAP.
                       File import cannot discover which section a message
                       belongs to.
@@ -297,28 +290,28 @@ export default function SettingsImportPage() {
                   </Button>
                   {fileProgress && (
                     <div
-                      className="space-y-1 text-xs text-neutral-500"
+                      className="space-y-1 text-xs text-muted-foreground"
                       aria-live="polite"
                     >
                       <div className="flex justify-between">
                         <span>{fileProgress.label}</span>
                         <span>{fileProgress.completed}%</span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full bg-blue-600 transition-[width]"
+                          className="h-full bg-primary transition-[width]"
                           style={{ width: `${fileProgress.completed}%` }}
                         />
                       </div>
                     </div>
                   )}
                   {fileResult && (
-                    <p className="rounded-lg border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
                       {formatImportResult(fileResult)}
                     </p>
                   )}
                   {fileError && (
-                    <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                       {fileError}
                     </p>
                   )}
@@ -403,7 +396,7 @@ export default function SettingsImportPage() {
                         }
                       />
                     </div>
-                    <label className="flex items-end gap-2 pb-2 text-sm text-neutral-700">
+                    <label className="flex items-end gap-2 pb-2 text-sm text-foreground/80">
                       <Checkbox
                         checked={imapForm.secure}
                         onChange={(event) =>
@@ -416,10 +409,10 @@ export default function SettingsImportPage() {
                       Use TLS
                     </label>
                   </div>
-                  <p className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs leading-5 text-neutral-500">
+                  <p className="rounded-lg border border-border bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
                     IMAP imports selected source sections automatically. Folders
                     are discovered from the source account and imported into
-                    matching new or existing Mailflare folders.
+                    matching new or existing postbox folders.
                   </p>
                   <Button
                     type="submit"
@@ -437,7 +430,7 @@ export default function SettingsImportPage() {
                   </Button>
                   {imapProgress && (
                     <div
-                      className="space-y-1 text-xs text-neutral-500"
+                      className="space-y-1 text-xs text-muted-foreground"
                       aria-live="polite"
                     >
                       <div className="flex justify-between">
@@ -446,9 +439,9 @@ export default function SettingsImportPage() {
                           {imapProgress.completed}/{imapProgress.total}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full bg-blue-600 transition-[width]"
+                          className="h-full bg-primary transition-[width]"
                           style={{
                             width: `${Math.round((imapProgress.completed / imapProgress.total) * 100)}%`,
                           }}
@@ -457,12 +450,12 @@ export default function SettingsImportPage() {
                     </div>
                   )}
                   {imapResult && (
-                    <p className="rounded-lg border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
                       {formatImportResult(imapResult)}
                     </p>
                   )}
                   {imapError && (
-                    <p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                       {imapError}
                     </p>
                   )}

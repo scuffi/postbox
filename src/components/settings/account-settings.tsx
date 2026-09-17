@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChangePasswordForm } from "./change-password-form";
 import { EmailClientsSettings } from "./email-clients-settings";
@@ -8,6 +9,8 @@ import { MfaSettings } from "./mfa-settings";
 import { ForwardingEmailForm } from "./forwarding-email-form";
 import { MailboxSignatureForm } from "./mailbox-signature-form";
 import { ProfileForm } from "./profile-form";
+import { SettingsCard, SettingsSection } from "./settings-section";
+import { ThemeSegmented } from "@/components/theme-toggle";
 import type { AccountSettingsResponse } from "./types";
 import { loadAccountSettings } from "./utils";
 
@@ -31,88 +34,77 @@ export function AccountSettings() {
 		};
 	}, []);
 
+	const header = <PageHeader title="Account" description="Your identity, sign-in security and how postbox looks for you." />;
+
 	if (error) {
-		return <p className="py-8 text-sm text-red-600">{error}</p>;
+		return (
+			<>
+				{header}
+				<p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">{error}</p>
+			</>
+		);
 	}
 
 	if (!user) {
 		return (
-			<div className="space-y-6 py-4">
-				<Skeleton className="h-9 w-40" />
-				<Skeleton className="h-72 w-full rounded-3xl" />
-			</div>
+			<>
+				{header}
+				<div className="grid gap-10 xl:grid-cols-[220px_1fr]">
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-28" />
+						<Skeleton className="h-3 w-40" />
+					</div>
+					<Skeleton className="h-72 w-full rounded-2xl" />
+				</div>
+			</>
 		);
 	}
 
 	return (
-		<div className="space-y-8 py-4">
-			{/* <div>
-				<h1 className="text-3xl font-medium text-neutral-900">Account</h1>
-				<p className="mt-1 text-sm text-neutral-500">Manage your account details and sign-in password.</p>
-			</div> */}
+		<>
+			{header}
 
-			<section className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">Account details</h2>
-					<p className="mt-1 text-sm text-neutral-500">Manage your identity, recovery options, and email preferences.</p>
-				</div>
-				<div className="space-y-1 overflow-hidden rounded-3xl">
-					<ProfileForm
-						initialName={user.name}
-						initialResetEmail={user.resetEmail ?? ""}
-						email={user.email}
-					/>
+			<SettingsSection title="Profile" description="How you appear to the people you email, and how to get back in if you're locked out.">
+				<ProfileForm initialName={user.name} initialResetEmail={user.resetEmail ?? ""} email={user.email} />
+			</SettingsSection>
 
-					{user.canForwardEmail && (
-						<div className="space-y-4 rounded-lg bg-white p-6">
-							<div>
-								<h3 className="text-lg font-semibold text-neutral-900">Forwarding email</h3>
-								<p className="mt-1 text-sm text-neutral-500">Send a copy of incoming messages to another email address.</p>
-							</div>
-						<ForwardingEmailForm initialForwardingEmail={user.forwardingEmail ?? ""} />
-						</div>
-					)}
-
-					<div className="space-y-4 rounded-b-3xl rounded-t-lg bg-white p-6">
+			<SettingsSection title="Appearance" description="Pick a theme, or follow your system setting.">
+				<SettingsCard>
+					<div className="flex items-center justify-between gap-4">
 						<div>
-							<h3 className="text-lg font-semibold text-neutral-900">Email signature</h3>
-							<p className="mt-1 text-sm text-neutral-500">Configure the signature for the inbox currently selected above.</p>
+							<p className="text-sm font-medium text-foreground">Theme</p>
+							<p className="text-[13px] text-muted-foreground">Light, dark or automatic.</p>
 						</div>
+						<ThemeSegmented />
+					</div>
+				</SettingsCard>
+			</SettingsSection>
+
+			<SettingsSection title="Mail" description="Signature and forwarding for the inbox selected in the sidebar.">
+				<SettingsCard title="Email signature" description="Added to new messages, replies and forwards.">
 					<MailboxSignatureForm />
-					</div>
-				</div>
-			</section>
+				</SettingsCard>
+				{user.canForwardEmail && (
+					<SettingsCard title="Forwarding" description="Send a copy of incoming messages to another address.">
+						<ForwardingEmailForm initialForwardingEmail={user.forwardingEmail ?? ""} />
+					</SettingsCard>
+				)}
+			</SettingsSection>
 
-			<section className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">Security</h2>
-					<p className="mt-1 text-sm text-neutral-500">Manage how you sign in to your account.</p>
-				</div>
-				<div className="space-y-4 rounded-3xl bg-white p-6">
-					<div>
-						<h3 className="text-lg font-semibold text-neutral-900">Change password</h3>
-						<p className="mt-1 text-sm text-neutral-500">Use at least 8 characters for your new password.</p>
-					</div>
+			<SettingsSection title="Security" description="Protect how you sign in to your account.">
+				<SettingsCard title="Password" description="Use at least 8 characters.">
 					<ChangePasswordForm />
-				</div>
-				<div className="space-y-4 rounded-3xl bg-white p-6">
-					<div>
-						<h3 className="text-lg font-semibold text-neutral-900">Two-factor authentication</h3>
-						<p className="mt-1 text-sm text-neutral-500">Require a code from an authenticator app when signing in.</p>
-					</div>
+				</SettingsCard>
+				<SettingsCard title="Two-factor authentication" description="Require a code from an authenticator app when signing in.">
 					<MfaSettings />
-				</div>
-			</section>
+				</SettingsCard>
+			</SettingsSection>
 
-			<section className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">Email apps</h2>
-					<p className="mt-1 text-sm text-neutral-500">Use your mail from a desktop or mobile app over JMAP.</p>
-				</div>
-				<div className="space-y-4 rounded-3xl bg-white p-6">
+			<SettingsSection title="Email apps" description="Use your mail from a desktop or mobile app over JMAP.">
+				<SettingsCard>
 					<EmailClientsSettings />
-				</div>
-			</section>
-		</div>
+				</SettingsCard>
+			</SettingsSection>
+		</>
 	);
 }

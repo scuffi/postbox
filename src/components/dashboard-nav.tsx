@@ -8,7 +8,7 @@ import {
   FileText,
   Folder,
   Inbox,
-  MailPlus,
+  PenLine,
   Plus,
   Send,
   ShieldAlert,
@@ -21,12 +21,16 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip } from "@/components/ui/tooltip";
+import { motion } from "motion/react";
+import { SidebarFrame, SidebarSection } from "./app-shell";
 import { useMessageCounts } from "@/hooks/use-message-counts";
 import { authFetch } from "@/lib/auth/client";
 import {
@@ -46,9 +50,11 @@ import {
 import { SidebarFooter } from "./sidebar-footer";
 import { SidebarHeader } from "./sidebar-header";
 import { useSidebar } from "./sidebar-state";
+import { DomainRail } from "./domain-rail";
+
+const composeLink = { href: "/compose", label: "New message", icon: PenLine, primary: true };
 
 const links = [
-  { href: "/compose", label: "Compose", icon: MailPlus, primary: true },
   { href: "/inbox", label: "Inbox", icon: Inbox, preloadMessages: true },
   { href: "/starred", label: "Starred", icon: Star, preloadMessages: true },
   { href: "/snoozed", label: "Snoozed", icon: Clock, preloadMessages: true },
@@ -170,105 +176,132 @@ export function DashboardNav({ className }: { className?: string }) {
   }
 
   return (
-    <nav className={cn("flex min-h-full flex-col gap-1", className)}>
-      <SidebarHeader href="/inbox" />
-      {linksWithCounts.map((link, i) => (
-        <NavItem link={link} key={`nav-${link.href || i}`} />
-      ))}
-      {!minimal && (
-        <div className="mt-2 flex h-8 items-center justify-between px-3">
-          <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">
-            Folders
-          </span>
-          {selectedMailbox && (
-            <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
-              <DialogTrigger asChild>
-                <button
-                  type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-500 hover:bg-blue-50 hover:text-blue-700"
-                  aria-label="Create folder"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create folder</DialogTitle>
-                  <DialogDescription>
-                    Add a folder to the selected mailbox.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={createFolder} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="folderName">Folder name</Label>
-                    <Input
-                      id="folderName"
-                      value={newFolderName}
-                      onChange={(event) => setNewFolderName(event.target.value)}
-                      placeholder="Receipts"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Color</Label>
-                    <div
-                      className="flex flex-wrap gap-2"
-                      role="radiogroup"
-                      aria-label="Folder color"
+    <SidebarFrame
+      header={
+        <div className="flex flex-col gap-3">
+          <SidebarHeader href="/inbox" />
+          <NavItem link={composeLink} />
+        </div>
+      }
+      footer={<SidebarFooter />}
+    >
+      <div className={className}>
+        <DomainRail />
+        <SidebarSection label="Mail">
+          {linksWithCounts.map((link, i) => (
+            <NavItem link={link} key={`nav-${link.href || i}`} />
+          ))}
+        </SidebarSection>
+        <SidebarSection
+          label="Folders"
+          action={
+            selectedMailbox && (
+              <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
+                <Tooltip label="New folder" side="right">
+                  <DialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex size-6 items-center justify-center rounded-md text-subtle-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      aria-label="Create folder"
                     >
-                      {FOLDER_COLOR_OPTIONS.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          role="radio"
-                          aria-checked={newFolderColor === option.value}
-                          aria-label={option.label}
-                          title={option.label}
-                          onClick={() => setNewFolderColor(option.value)}
-                          className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                            newFolderColor === option.value
-                              ? "border-neutral-900 ring-2 ring-neutral-300 ring-offset-2"
-                              : "border-transparent"
-                          }`}
-                          style={{ backgroundColor: option.value }}
+                      <Plus className="size-3.5" />
+                    </button>
+                  </DialogTrigger>
+                </Tooltip>
+                <DialogContent className="w-[min(420px,calc(100vw-32px))]">
+                  <DialogHeader>
+                    <DialogTitle>New folder</DialogTitle>
+                    <DialogDescription>
+                      Organise mail in the selected mailbox. Drag messages onto a folder to file them.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={createFolder} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="folderName">Name</Label>
+                      <div className="relative">
+                        <Folder
+                          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 transition-colors"
+                          style={{ color: newFolderColor }}
                         />
-                      ))}
+                        <Input
+                          id="folderName"
+                          value={newFolderName}
+                          onChange={(event) => setNewFolderName(event.target.value)}
+                          placeholder="Receipts"
+                          className="pl-9"
+                          autoFocus
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={addingFolder || !newFolderName.trim()}
-                  >
-                    {addingFolder ? "Creating..." : "Create folder"}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+                    <div className="space-y-2.5">
+                      <Label>Colour</Label>
+                      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Folder color">
+                        {FOLDER_COLOR_OPTIONS.map((option) => {
+                          const selected = newFolderColor === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              aria-label={option.label}
+                              title={option.label}
+                              onClick={() => setNewFolderColor(option.value)}
+                              className={cn(
+                                "relative size-7 rounded-full transition-transform duration-150 hover:scale-110 active:scale-95",
+                                selected && "scale-110",
+                              )}
+                              style={{ backgroundColor: option.value }}
+                            >
+                              {selected && (
+                                <motion.span
+                                  layoutId="folder-color-ring"
+                                  className="absolute -inset-[3px] rounded-full ring-2"
+                                  style={{ ["--tw-ring-color" as string]: option.value }}
+                                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" variant="ghost" onClick={() => setFolderDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={addingFolder || !newFolderName.trim()}>
+                        {addingFolder ? "Creating…" : "Create folder"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )
+          }
+        >
+          {!minimal && folders.length === 0 && (
+            <p className="px-2.5 py-1 text-[12.5px] text-subtle-foreground">
+              No folders yet
+            </p>
           )}
-        </div>
-      )}
-      {!minimal && folders.length === 0 && (
-        <div className="mx-3 rounded-lg border border-dashed border-neutral-200 px-3 py-3 text-xs text-neutral-400">
-          No folders yet
-        </div>
-      )}
-      {folders.map((folder) => (
-        <NavItem
-          key={folder.id}
-          link={{
-            href: `/folders/${folder.id}`,
-            label: folder.name,
-            icon: Folder,
-            preloadMessages: true,
-            iconColor: folder.color,
-            count: counts.customFolders[folder.id]?.unread,
-            onMessageDrop: (messageIds: string[]) =>
-              void moveMessagesToCustomFolder(messageIds, folder.id),
-          }}
-        />
-      ))}
-      <span className="flex-1" />
-      <SidebarFooter />
-    </nav>
+          {folders.map((folder) => (
+            <NavItem
+              key={folder.id}
+              link={{
+                href: `/folders/${folder.id}`,
+                label: folder.name,
+                icon: Folder,
+                preloadMessages: true,
+                iconColor: folder.color,
+                count: counts.customFolders[folder.id]?.unread,
+                onMessageDrop: (messageIds: string[]) =>
+                  void moveMessagesToCustomFolder(messageIds, folder.id),
+              }}
+            />
+          ))}
+        </SidebarSection>
+      </div>
+    </SidebarFrame>
   );
 }

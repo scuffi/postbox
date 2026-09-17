@@ -1,12 +1,22 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { SidebarProviderProps, SidebarState } from "./sidebar-state-types";
 
-const SidebarContext = createContext<SidebarState>({ minimal: false, toggle: () => undefined });
+const SidebarContext = createContext<SidebarState>({
+	minimal: false,
+	toggle: () => undefined,
+	mobileOpen: false,
+	setMobileOpen: () => undefined,
+});
 
-export function SidebarProvider({ children, expandedWidth = 240 }: SidebarProviderProps) {
+export const SIDEBAR_MINIMAL_WIDTH = 64;
+
+export function SidebarProvider({ children, expandedWidth = 256 }: SidebarProviderProps) {
+	const pathname = usePathname();
 	const [minimal, setMinimal] = useState(false);
+	const [mobileOpen, setMobileOpen] = useState(false);
 	const [storageKey, setStorageKey] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -32,17 +42,31 @@ export function SidebarProvider({ children, expandedWidth = 240 }: SidebarProvid
 			.catch(() => undefined);
 	}, []);
 
+	// Close the mobile drawer whenever navigation happens.
+	const [drawerPathname, setDrawerPathname] = useState(pathname);
+	if (drawerPathname !== pathname) {
+		setDrawerPathname(pathname);
+		setMobileOpen(false);
+	}
+
 	function toggle() {
 		setMinimal((current) => {
 			const next = !current;
-			if (storageKey) localStorage.setItem(storageKey, String(next));
+			try {
+				if (storageKey) localStorage.setItem(storageKey, String(next));
+			} catch {
+				// Cosmetic preference only.
+			}
 			return next;
 		});
 	}
 
 	return (
-		<SidebarContext.Provider value={{ minimal, toggle }}>
-			<div className="h-full" style={{ "--sidebar-width": `${minimal ? 72 : expandedWidth}px` } as React.CSSProperties}>
+		<SidebarContext.Provider value={{ minimal, toggle, mobileOpen, setMobileOpen }}>
+			<div
+				className="h-full"
+				style={{ "--sidebar-width": `${minimal ? SIDEBAR_MINIMAL_WIDTH : expandedWidth}px` } as React.CSSProperties}
+			>
 				{children}
 			</div>
 		</SidebarContext.Provider>
@@ -51,4 +75,10 @@ export function SidebarProvider({ children, expandedWidth = 240 }: SidebarProvid
 
 export function useSidebar() {
 	return useContext(SidebarContext);
+}
+
+/** Inside the mobile drawer the sidebar always renders expanded. */
+export function ExpandedSidebarScope({ children }: { children: React.ReactNode }) {
+	const state = useSidebar();
+	return <SidebarContext.Provider value={{ ...state, minimal: false }}>{children}</SidebarContext.Provider>;
 }

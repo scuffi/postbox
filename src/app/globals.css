@@ -2,97 +2,374 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * postbox design tokens.
+ *
+ * The palette is built around Royal Mail pillar-box red (#DA202A) on warm,
+ * paper-like neutrals, with a cypher gold used sparingly (stars, highlights).
+ * The app shell is a tinted `canvas` holding raised `card` panels.
+ */
 :root {
-	--background: #f6f8fc;
-	--foreground: #202124;
+	/* Surfaces */
+	--canvas: #f3f1ee;
+	--background: #f3f1ee;
+	--foreground: #1c1917;
 	--card: #ffffff;
-	--muted: #eef3fb;
-	--border: #dadce0;
-	--primary: #0b57d0;
+	--card-foreground: #1c1917;
+	--popover: #ffffff;
+	--popover-foreground: #1c1917;
+	--elevated: #fbfaf8;
+
+	/* Brand */
+	--primary: #da202a;
+	--primary-hover: #c21b24;
 	--primary-foreground: #ffffff;
+	--primary-soft: #fdecec;
+	--primary-soft-foreground: #b3141d;
+	--gold: #b8862b;
+	--gold-soft: #f8efdc;
+
+	/* Muted / secondary */
+	--secondary: #f0ede9;
+	--secondary-foreground: #1c1917;
+	--muted: #f0ede9;
+	--muted-foreground: #78716c;
+	--subtle-foreground: #a8a29e;
+	--accent: #f0ede9;
+	--accent-foreground: #1c1917;
+
+	/* Feedback */
+	--destructive: #d92d20;
+	--destructive-foreground: #ffffff;
+	--success: #16a34a;
+	--warning: #d97706;
+
+	/* Lines & rings */
+	--border: #e8e4df;
+	--border-strong: #d9d3cc;
+	--input: #e2ddd7;
+	--ring: #da202a;
+
+	--radius: 0.625rem;
+
+	--shadow-panel: 0 0 0 1px rgb(28 25 23 / 0.04), 0 1px 2px rgb(28 25 23 / 0.04), 0 4px 16px -4px rgb(28 25 23 / 0.06);
+	--shadow-float: 0 0 0 1px rgb(28 25 23 / 0.06), 0 8px 24px -6px rgb(28 25 23 / 0.14), 0 24px 56px -12px rgb(28 25 23 / 0.18);
+	--shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 1px 2px rgb(28 25 23 / 0.12), 0 0 0 1px rgb(158 16 24 / 0.6);
+
+	color-scheme: light;
+}
+
+.dark {
+	--canvas: #0c0a09;
+	--background: #0c0a09;
+	--foreground: #f5f2ee;
+	--card: #151211;
+	--card-foreground: #f5f2ee;
+	--popover: #1b1816;
+	--popover-foreground: #f5f2ee;
+	--elevated: #1b1816;
+
+	--primary: #e8343d;
+	--primary-hover: #f04a52;
+	--primary-foreground: #ffffff;
+	--primary-soft: rgb(232 52 61 / 0.14);
+	--primary-soft-foreground: #ff8a8f;
+	--gold: #e0b25a;
+	--gold-soft: rgb(224 178 90 / 0.14);
+
+	--secondary: #211d1b;
+	--secondary-foreground: #f5f2ee;
+	--muted: #1e1a18;
+	--muted-foreground: #a39a93;
+	--subtle-foreground: #6f6761;
+	--accent: #231f1d;
+	--accent-foreground: #f5f2ee;
+
+	--destructive: #f04438;
+	--destructive-foreground: #ffffff;
+	--success: #4ade80;
+	--warning: #fbbf24;
+
+	--border: #26211f;
+	--border-strong: #342e2b;
+	--input: #2e2926;
+	--ring: #e8343d;
+
+	--shadow-panel: 0 0 0 1px rgb(255 255 255 / 0.05), 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5);
+	--shadow-float: 0 0 0 1px rgb(255 255 255 / 0.07), 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 32px 64px -16px rgb(0 0 0 / 0.6);
+	--shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.16), 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 120 120 / 0.15);
+
+	color-scheme: dark;
 }
 
 @theme inline {
+	--color-canvas: var(--canvas);
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-elevated: var(--elevated);
+	--color-primary: var(--primary);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary-soft: var(--primary-soft);
+	--color-primary-soft-foreground: var(--primary-soft-foreground);
+	--color-gold: var(--gold);
+	--color-gold-soft: var(--gold-soft);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-subtle-foreground: var(--subtle-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--color-border: var(--border);
+	--color-border-strong: var(--border-strong);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--radius-2xl: calc(var(--radius) + 8px);
+
+	--shadow-panel: var(--shadow-panel);
+	--shadow-float: var(--shadow-float);
+	--shadow-button: var(--shadow-button);
+
 	--font-sans: var(--font-geist-sans);
-	--no-font-mono: var(--font-geist-mono);
+	--font-mono: var(--font-geist-mono);
+	--font-display: var(--font-display-serif);
+
+	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+	--animate-fade-in: fade-in 0.24s var(--ease-out-expo) both;
+	--animate-fade-up: fade-up 0.36s var(--ease-out-expo) both;
+	--animate-shimmer: shimmer 1.6s ease-in-out infinite;
 }
 
-body {
-	background: var(--background);
-	color: var(--foreground);
-	font-family: var(--font-geist-sans), system-ui, sans-serif;
+/*
+ * Accent swap: older screens still reference Tailwind's `blue-*` scale. Remap it
+ * to a pillar-box ramp so those classes stay on brand.
+ */
+@theme {
+	--color-blue-50: #fef2f2;
+	--color-blue-100: #fde3e4;
+	--color-blue-200: #fbc9cb;
+	--color-blue-300: #f6a0a4;
+	--color-blue-400: #ee6b72;
+	--color-blue-500: #e33c44;
+	--color-blue-600: #da202a;
+	--color-blue-700: #b3141d;
+	--color-blue-800: #8f1319;
+	--color-blue-900: #6e1418;
+	--color-blue-950: #3d0709;
 }
 
-pre {
-	font-family: var(--font-geist-sans), system-ui, sans-serif;
-}
-
-.text {
-	font-family: var(--font-geist-sans), system-ui, sans-serif;
-}
-
-@keyframes dialog-overlay-show {
+@keyframes fade-in {
 	from { opacity: 0; }
 	to { opacity: 1; }
 }
 
-@keyframes dialog-overlay-hide {
-	from { opacity: 1; }
-	to { opacity: 0; }
+@keyframes fade-up {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes dialog-content-show {
-	from {
-		opacity: 0;
-		transform: scale(0.94);
+@keyframes shimmer {
+	0% { background-position: 200% 0; }
+	100% { background-position: -200% 0; }
+}
+
+/* Overlay motion, driven by Radix data-state so exits animate too. */
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlay-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes dialog-in {
+	from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(0.97); filter: blur(2px); }
+	to { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+}
+@keyframes dialog-out {
+	from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	to { opacity: 0; transform: translate(-50%, calc(-50% + 6px)) scale(0.98); }
+}
+@keyframes drawer-in {
+	from { transform: translateX(-100%); }
+	to { transform: translateX(0); }
+}
+@keyframes pop-in {
+	from { opacity: 0; transform: translateY(var(--pop-y, -4px)) scale(0.97); }
+	to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pop-out {
+	from { opacity: 1; transform: scale(1); }
+	to { opacity: 0; transform: scale(0.97); }
+}
+
+@utility anim-overlay {
+	&[data-state="open"] { animation: overlay-in 0.2s var(--ease-out-expo); }
+	&[data-state="closed"] { animation: overlay-out 0.15s ease-in; }
+}
+
+@utility anim-dialog {
+	&[data-state="open"] { animation: dialog-in 0.32s var(--ease-out-expo); }
+	&[data-state="closed"] { animation: dialog-out 0.15s ease-in; }
+}
+
+@utility anim-pop {
+	transform-origin: var(--radix-popper-transform-origin, var(--radix-dropdown-menu-content-transform-origin, center));
+	&[data-side="top"] { --pop-y: 4px; }
+	&[data-side="left"], &[data-side="right"] { --pop-y: 0px; }
+	&[data-state="open"], &[data-state="delayed-open"], &[data-state="instant-open"] { animation: pop-in 0.18s var(--ease-out-expo); }
+	&[data-state="closed"] { animation: pop-out 0.12s ease-in; }
+}
+
+/* Tables inside admin screens: quiet header, hairline rows, hover wash. */
+@utility data-table {
+	width: 100%;
+	font-size: 13px;
+	& thead {
+		background: color-mix(in oklab, var(--muted) 60%, transparent);
 	}
-	to {
-		opacity: 1;
-		transform: scale(1);
+	& th {
+		padding: 10px 16px;
+		text-align: left;
+		font-size: 11px;
+		font-weight: 500;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--subtle-foreground);
+		border-bottom: 1px solid var(--border);
+		white-space: nowrap;
+	}
+	& td {
+		padding: 12px 16px;
+		border-top: 1px solid var(--border);
+		vertical-align: top;
+	}
+	& tbody tr:first-child td {
+		border-top: 0;
+	}
+	& tbody tr {
+		transition: background-color 150ms;
+	}
+	& tbody tr:hover {
+		background: color-mix(in oklab, var(--foreground) 2.5%, transparent);
 	}
 }
 
-@keyframes dialog-content-hide {
-	from {
-		opacity: 1;
-		transform: scale(1);
-	}
-	to {
-		opacity: 0;
-		transform: scale(0.97);
-	}
+@utility scrollbar-gutter-stable {
+	scrollbar-gutter: stable;
 }
 
-.dialog-overlay[data-state="open"] {
-	animation: dialog-overlay-show 180ms ease-out;
-}
-
-.dialog-overlay[data-state="closed"] {
-	animation: dialog-overlay-hide 130ms ease-in;
-}
-
-.dialog-content[data-state="open"] {
-	transform-origin: center;
-	animation: dialog-content-show 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.dialog-content[data-state="closed"] {
-	transform-origin: center;
-	animation: dialog-content-hide 130ms ease-in;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.dialog-overlay,
-	.dialog-content {
-		animation-duration: 1ms !important;
+@utility scrollbar-none {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
 	}
 }
 
-/* Rendered email bodies (reader, conversation cards, composer). Tailwind's
-   preflight strips list markers and blockquote styling, which both incoming
-   mail and the composer's own lists rely on. */
+@utility font-display {
+	font-family: var(--font-display-serif), ui-serif, Georgia, serif;
+	font-weight: 400;
+	letter-spacing: -0.01em;
+}
+
+@utility surface-panel {
+	background-color: var(--card);
+	box-shadow: var(--shadow-panel);
+}
+
+@utility text-balance {
+	text-wrap: balance;
+}
+
+@layer base {
+	*,
+	::after,
+	::before {
+		border-color: var(--border);
+	}
+
+	html,
+	body {
+		background: var(--canvas);
+	}
+
+	body {
+		color: var(--foreground);
+		font-family: var(--font-geist-sans), system-ui, sans-serif;
+		font-feature-settings: "ss01", "cv11";
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-rendering: optimizeLegibility;
+	}
+
+	::selection {
+		background: color-mix(in oklab, var(--primary) 22%, transparent);
+	}
+
+	h1,
+	h2,
+	h3 {
+		text-wrap: balance;
+	}
+
+	button:not(:disabled),
+	[role="button"]:not(:disabled) {
+		cursor: pointer;
+	}
+
+	:focus-visible {
+		outline: 2px solid color-mix(in oklab, var(--ring) 55%, transparent);
+		outline-offset: 2px;
+	}
+
+	input:focus-visible,
+	textarea:focus-visible,
+	select:focus-visible,
+	[contenteditable]:focus-visible {
+		outline: none;
+	}
+
+	/* Thin, quiet scrollbars that only darken on hover. */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: transparent transparent;
+	}
+	*:hover {
+		scrollbar-color: color-mix(in oklab, var(--foreground) 18%, transparent) transparent;
+	}
+
+	input[type="datetime-local"],
+	input[type="date"],
+	input[type="time"] {
+		color-scheme: inherit;
+	}
+}
+
+pre,
+.text {
+	font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/*
+ * Rendered email bodies (reader, conversation cards, composer). Tailwind's
+ * preflight strips list markers and blockquote styling, which both incoming
+ * mail and the composer's own lists rely on.
+ */
+.email-body {
+	font-size: 0.9375rem;
+	line-height: 1.65;
+	overflow-wrap: anywhere;
+}
 .email-body ul {
 	list-style: disc;
 	padding-left: 1.5rem;
@@ -104,15 +381,61 @@ pre {
 	margin: 0.25rem 0;
 }
 .email-body blockquote {
-	border-left: 2px solid #d4d4d4;
-	margin: 0.25rem 0;
-	padding-left: 0.75rem;
-	color: #525252;
+	border-left: 2px solid var(--border-strong);
+	margin: 0.5rem 0;
+	padding-left: 0.875rem;
+	color: var(--muted-foreground);
 }
 .email-body a {
-	color: #2563eb;
+	color: var(--primary);
 	text-decoration: underline;
+	text-decoration-color: color-mix(in oklab, var(--primary) 35%, transparent);
+	text-underline-offset: 3px;
+}
+.email-body a:hover {
+	text-decoration-color: var(--primary);
 }
 .email-body p {
-	margin: 0 0 0.5rem;
+	margin: 0 0 0.625rem;
+}
+/*
+ * HTML mail is authored for white paper and usually hardcodes dark text, so in
+ * dark mode it is shown on a light sheet rather than recoloured.
+ */
+.dark .email-paper {
+	background: #fbfaf8;
+	color: #1c1917;
+	border-radius: 12px;
+	padding: 20px 22px;
+	box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+.dark .email-paper .email-body {
+	color: #1c1917;
+	--primary: #b3141d;
+	--border-strong: #d9d3cc;
+	--muted-foreground: #78716c;
+}
+.email-body img {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Sonner toasts, themed to the token system. */
+[data-sonner-toaster] [data-sonner-toast] {
+	font-family: var(--font-geist-sans), system-ui, sans-serif;
+	border-radius: 12px;
+	background: var(--popover);
+	color: var(--popover-foreground);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-float);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 1ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 1ms !important;
+	}
 }

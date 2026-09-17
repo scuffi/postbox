@@ -101,16 +101,16 @@ export function LoginClient() {
             />
           </div>
           {error && (
-            <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium ring-1 ring-inset ring-red-500/20 text-red-700 dark:text-red-400">
               {error}
             </p>
           )}
-          <Button type="submit" className="h-11 w-full rounded-full px-6 active:scale-[0.98]" disabled={loading}>
-            {loading ? "Verifying..." : "Verify"}
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading ? "Verifying…" : "Verify"}
           </Button>
           <button
             type="button"
-            className="w-full text-center text-sm text-neutral-500 hover:text-neutral-800"
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
             onClick={() => {
               setChallengeToken(null);
               setCode("");
@@ -144,7 +144,7 @@ export function LoginClient() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link href="/forgot-password" className="text-xs font-medium text-blue-600 hover:underline">
+            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -157,17 +157,17 @@ export function LoginClient() {
           />
         </div>
         {error && (
-          <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium ring-1 ring-inset ring-red-500/20 text-red-700 dark:text-red-400">
             {error}
           </p>
         )}
         <TurnstileField resetSignal={turnstileReset} />
         <Button
           type="submit"
-          className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+          size="lg" className="w-full"
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Signing in…" : "Sign in"}
         </Button>
       </form>
     </AuthShell>

@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
-import { ChevronLeft, ChevronRight, ListFilter } from "lucide-react";
+import { Archive, ChevronLeft, ChevronRight, Clock, FolderOpen, Inbox, ListFilter, PenLine, SearchX, Send, ShieldCheck, Star, Trash2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { ContactAvatar } from "@/components/contacts/contact-avatar";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Segmented } from "@/components/ui/segmented";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -13,12 +18,14 @@ import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { usePageLoading } from "@/components/page-loading";
 import { useMessageCounts } from "@/hooks/use-message-counts";
 import { useMessages } from "@/hooks/use-messages";
+import { AnimatePresence, motion } from "motion/react";
 import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
 import type { Message } from "@/hooks/types";
 import { setMessageDragData } from "@/lib/messages/drag-utils";
 import { BulkMessageToolbar } from "./bulk-message-toolbar";
 import { MessageListRowActions } from "./message-list-row-actions";
 import { dispatchMessageCountsDelta, toggleMessageStar } from "./message-list-row-actions-utils";
+import { domainColor } from "@/lib/domain-color";
 import { MessageNavigationProgress, useMessageNavigation } from "./message-navigation";
 import { useConversationView } from "./use-conversation-view";
 import type { MessageFolderPageProps, MessageListRowProps } from "./types";
@@ -26,7 +33,6 @@ import {
 	formatMessageListTimestamp,
 	getPageRange,
 	getMessageParty,
-	getMessagePartyClassName,
 	getMessagePreview,
 	isMessageListRowUnread,
 	formatEmailPageTitle,
@@ -44,6 +50,7 @@ function MessageListRow({
 	active = false,
 	compact = false,
 	currentAccountName,
+	showMailboxIndicator = false,
 	onSelectedChange,
 	onMessageAction,
 	dragMessageIds,
@@ -79,113 +86,164 @@ function MessageListRow({
 		navigation.onNavigate(event, !read);
 	}
 
+	const accountDomain = message.accountAddress?.split("@")[1] ?? "";
+	const mailboxChip = showMailboxIndicator && message.direction === "inbound" && message.accountName ? (
+		<span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-foreground/[0.04] px-1.5 py-px text-[11px] font-medium text-muted-foreground ring-1 ring-inset ring-border/70">
+			<span className={clsx("size-1.5 shrink-0 rounded-full", domainColor(accountDomain).dot)} />
+			{message.accountName}
+		</span>
+	) : null;
+	const threadChip = (message.threadCount ?? 1) > 1 ? (
+		<span className="shrink-0 rounded-md bg-muted px-1.5 text-[11px] font-medium leading-[18px] tabular-nums text-muted-foreground">
+			{message.threadCount}
+		</span>
+	) : null;
+	const avatarAddress = config.folder === "sent" ? message.toAddr : message.fromAddr;
+	const lead = (
+		<div className="relative flex size-8 shrink-0 items-center justify-center">
+			{unread && (
+				<span className="absolute -left-[13px] top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_6px_var(--primary)]" />
+			)}
+			<span className={clsx("transition-[opacity,transform] duration-150", selected ? "scale-75 opacity-0" : "group-hover:scale-75 group-hover:opacity-0")}>
+				{config.folder === "drafts" ? (
+					<span className="flex size-8 items-center justify-center rounded-full bg-primary-soft text-primary-soft-foreground">
+						<PenLine className="size-3.5" />
+					</span>
+				) : (
+					<ContactAvatar
+						mailboxId={message.mailboxId}
+						address={avatarAddress}
+						name={party}
+						hasManagedAvatar={config.folder !== "sent" && message.direction === "inbound" && !!message.fromContactHasAvatar}
+						managedAvatarUrl={message.direction === "outbound" && config.folder !== "sent" && message.mailboxId ? `/api/mailboxes/${message.mailboxId}/avatar` : undefined}
+					/>
+				)}
+			</span>
+			<span className={clsx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-150", selected ? "scale-100 opacity-100" : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100")}>
+				<Checkbox
+					checked={selected}
+					onChange={(event) => onSelectedChange(message.id, event.target.checked)}
+					aria-label={`Select message from ${party}`}
+				/>
+			</span>
+		</div>
+	);
+
 	if (compact && config.folder !== "drafts") {
 		return (
 			<div
-				className={`group grid grid-cols-[20px_minmax(0,1fr)] gap-3 border-l-2 px-4 py-3 transition-colors ${active
-					? "border-l-blue-600 bg-blue-50"
-					: selected
-						? "border-l-transparent bg-neutral-50"
-						: "border-l-transparent hover:bg-neutral-50"
-					} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+				className={clsx(
+					"group relative mx-2 flex gap-3 rounded-xl px-3 py-2.5 transition-colors duration-150",
+					active ? "bg-accent" : selected ? "bg-primary-soft/60" : "hover:bg-foreground/[0.03]",
+					draggable && "cursor-grab active:cursor-grabbing",
+				)}
 				draggable={draggable}
 				onDragStart={(event) => {
 					if (!draggable) return;
 					setMessageDragData(event.dataTransfer, { messageIds: dragMessageIds });
 				}}
 			>
+				{active && (
+					<motion.span
+						layoutId={`active-row-${config.hrefPrefix}`}
+						transition={{ type: "spring", stiffness: 500, damping: 40 }}
+						className="absolute inset-y-2.5 left-0 w-[3px] rounded-full bg-primary"
+					/>
+				)}
 				<MessageNavigationProgress progress={navigation.progress} />
-				<Checkbox
-					checked={selected}
-					onChange={(event) => onSelectedChange(message.id, event.target.checked)}
-					className="mt-1 h-4 w-4 rounded border-neutral-300"
-					aria-label={`Select message from ${party}`}
-				/>
-				<Link href={href} onClick={onMessageNavigate} className="min-w-0">
-					<span className="flex items-baseline justify-between gap-3">
-						<span className={clsx(unread && "font-semibold",getMessagePartyClassName(message, config.folder))}>
+				<div className="pt-0.5">{lead}</div>
+				<Link href={href} onClick={onMessageNavigate} className="min-w-0 flex-1 outline-none">
+					<span className="flex items-center gap-2">
+						<span className={clsx("min-w-0 flex-1 truncate text-[13.5px]", unread ? "font-semibold text-foreground" : "font-medium text-foreground/85")}>
 							{party}
-
-							{(message.threadCount ?? 1) > 1 && (
-								<span className="ml-2 text-xs font-normal text-neutral-500">{message.threadCount}</span>
-							)}
 						</span>
-						<span className={clsx(unread ?"font-medium":"text-neutral-400","shrink-0 text-[11px]")}>
+						{threadChip}
+						<time
+							dateTime={message.createdAt}
+							className={clsx("shrink-0 text-[11.5px] tabular-nums", unread ? "font-medium text-primary" : "text-subtle-foreground")}
+						>
 							{formatMessageListTimestamp(message.createdAt)}
-						</span>
+						</time>
 					</span>
-					<span
-						className={`mt-1 block truncate text-sm ${unread ? "font-semibold text-neutral-900" : "text-neutral-700"
-							}`}
-					>
+					<span className={clsx("mt-0.5 block truncate text-[13px]", unread ? "font-medium text-foreground" : "text-foreground/75")}>
 						{message.subject ?? "(no subject)"}
 					</span>
-					<span className="mt-0.5 block truncate text-xs leading-5 text-neutral-500">
-						{preview}
+					<span className="mt-0.5 flex items-center gap-2">
+						<span className="min-w-0 flex-1 truncate text-[12.5px] leading-5 text-muted-foreground">{preview}</span>
+						{starred && <Star className="size-3 shrink-0 fill-gold text-gold" />}
 					</span>
+					{mailboxChip && <span className="mt-1.5 flex">{mailboxChip}</span>}
 				</Link>
 			</div>
 		);
 	}
 
-	const className =
-		`group relative grid min-h-12 w-full grid-cols-[24px_32px_minmax(160px,240px)_1fr_auto] items-center gap-3 px-6 text-left text-sm hover:z-10 hover:bg-[#f2f6fc] hover:shadow-sm ${active || selected ? "bg-blue-50" : ""
-		} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`;
+	const className = clsx(
+		"group relative mx-2 flex min-h-[52px] items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-150 sm:h-[52px] sm:py-0",
+		active || selected ? "bg-primary-soft/60 dark:bg-primary-soft/50" : "hover:bg-foreground/[0.03]",
+		draggable && "cursor-grab active:cursor-grabbing",
+	);
 	const content = (
 		<>
-			{config.folder === "inbox" && message.direction === "inbound" && (
-				<Tooltip label={starred ? "Starred" : "Not starred"}>
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						onClick={(event) => {
-							event.preventDefault();
-							event.stopPropagation();
-							void toggleMessageStar(message.id).then((result) => setStarred(result.starred));
-						}}
-						aria-label={starred ? "Starred" : "Not starred"}
-					>
-						<Icon className={`h-4 w-4 ${starred ? "fill-amber-400 text-amber-400" : "text-neutral-300"}`} />
-					</Button>
-				</Tooltip>
-			)}
-			{(config.folder !== "inbox" || message.direction !== "inbound") && (
-				<Icon className="h-4 w-4 text-neutral-300" />
-			)}
-			<span className={clsx(unread && "font-semibold", getMessagePartyClassName(rowMessage, config.folder))}>
-				{party}
-
-				{(message.threadCount ?? 1) > 1 && (
-					<span className="ml-2 text-xs text-neutral-500">{message.threadCount}</span>
-				)}
-			</span>
-			<span className="truncate text-neutral-700">
-				<span className={unread ? "font-semibold text-neutral-900" : ""}>
-					{rowMessage.subject ?? "(no subject)"}
+			<span className="flex min-w-0 shrink-0 items-center gap-2 max-sm:order-1 sm:w-[150px] lg:w-[200px]">
+				<span className={clsx("min-w-0 truncate text-[13.5px]", unread ? "font-semibold text-foreground" : "font-medium text-foreground/85", config.folder === "drafts" && "text-primary")}>
+					{party}
 				</span>
-				<span className="text-neutral-500"> - {getMessagePreview(rowMessage, config.folder)}</span>
+				{threadChip}
 			</span>
-			<time
-				dateTime={message.createdAt}
-				className={`min-w-[96px] whitespace-nowrap text-right text-xs group-hover:opacity-0 ${unread ? "font-semibold text-neutral-800" : "text-neutral-500"
-					}`}
-			>
-				{formatMessageListTimestamp(message.createdAt)}
-			</time>
+			<span className="flex min-w-0 flex-1 items-center gap-2.5 max-sm:order-3 max-sm:col-span-2">
+				{mailboxChip && <span className="hidden w-[112px] shrink-0 overflow-hidden xl:flex [&>span]:max-w-full [&>span]:truncate">{mailboxChip}</span>}
+				<span className="min-w-0 truncate text-[13.5px]">
+					<span className={unread ? "font-semibold text-foreground" : "text-foreground/85"}>
+						{rowMessage.subject ?? "(no subject)"}
+					</span>
+					<span className="text-muted-foreground"> — {getMessagePreview(rowMessage, config.folder)}</span>
+				</span>
+			</span>
+			<span className="flex shrink-0 items-center gap-1 pl-2 max-sm:order-2">
+				{config.folder === "inbox" && message.direction === "inbound" && (
+					<Tooltip label={starred ? "Unstar" : "Star"}>
+						<button
+							type="button"
+							onClick={(event) => {
+								event.preventDefault();
+								event.stopPropagation();
+								void toggleMessageStar(message.id).then((result) => setStarred(result.starred));
+							}}
+							aria-label={starred ? "Starred" : "Not starred"}
+							className={clsx(
+								"flex size-7 items-center justify-center rounded-lg transition-[opacity,background-color] hover:bg-gold-soft",
+								starred ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+							)}
+						>
+							<motion.span key={String(starred)} initial={{ scale: 0.4, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 600, damping: 15 }} className="flex">
+								<Icon className={clsx("size-[15px]", starred ? "fill-gold text-gold" : "text-subtle-foreground")} />
+							</motion.span>
+						</button>
+					</Tooltip>
+				)}
+				{(config.folder !== "inbox" || message.direction !== "inbound") && starred && (
+					<Star className="size-3.5 fill-gold text-gold" />
+				)}
+				<time
+					dateTime={message.createdAt}
+					className={clsx(
+						"min-w-[64px] whitespace-nowrap text-right text-[12px] tabular-nums transition-opacity",
+						(config.folder === "inbox" || config.folder === "snoozed") && message.direction === "inbound" && "group-hover:opacity-0",
+						unread ? "font-medium text-primary" : "text-subtle-foreground",
+					)}
+				>
+					{formatMessageListTimestamp(message.createdAt)}
+				</time>
+			</span>
 		</>
 	);
 
 	if (config.folder === "drafts") {
 		return (
 			<div className={className}>
-				<Checkbox
-					checked={selected}
-					onChange={(event) => onSelectedChange(message.id, event.target.checked)}
-					className="h-4 w-4 rounded border-neutral-300"
-					aria-label="Select message"
-				/>
-				<button type="button" className="contents text-left" onClick={() => openDraftComposer(message.id)}>
+				{lead}
+				<button type="button" className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 text-left outline-none sm:flex" onClick={() => openDraftComposer(message.id)}>
 					{content}
 				</button>
 			</div>
@@ -202,13 +260,8 @@ function MessageListRow({
 			}}
 		>
 			<MessageNavigationProgress progress={navigation.progress} />
-			<Checkbox
-				checked={selected}
-				onChange={(event) => onSelectedChange(message.id, event.target.checked)}
-				className="h-4 w-4 rounded border-neutral-300"
-				aria-label="Select message"
-			/>
-			<Link href={href} onClick={onMessageNavigate} className="contents">
+			{lead}
+			<Link href={href} onClick={onMessageNavigate} className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] content-center items-center gap-x-3 self-stretch outline-none sm:flex">
 				{content}
 			</Link>
 			{(config.folder === "inbox" || config.folder === "snoozed") && message.direction === "inbound" && (
@@ -235,6 +288,17 @@ function MessageListRow({
 		</div>
 	);
 }
+
+const emptyStates: Record<string, { icon: LucideIcon; title: string; description: string }> = {
+	inbox: { icon: Inbox, title: "Inbox zero", description: "Nothing waiting for you. New mail will slide in here the moment it arrives." },
+	starred: { icon: Star, title: "Nothing starred", description: "Star the messages worth coming back to and they'll collect here." },
+	snoozed: { icon: Clock, title: "No snoozed mail", description: "Snooze a message to tuck it away until the moment you need it." },
+	sent: { icon: Send, title: "Nothing sent yet", description: "Messages you send from any of your addresses appear here." },
+	drafts: { icon: PenLine, title: "No drafts", description: "Unfinished messages are saved here automatically." },
+	archived: { icon: Archive, title: "Archive is empty", description: "Archive mail to clear your inbox without deleting anything." },
+	spam: { icon: ShieldCheck, title: "No spam", description: "Suspicious mail is quarantined here. All clear for now." },
+	trash: { icon: Trash2, title: "Trash is empty", description: "Deleted messages rest here before they're gone for good." },
+};
 
 export function MessageFolderPage({
 	config,
@@ -367,110 +431,160 @@ export function MessageFolderPage({
 		}
 	}
 
+	const emptyState = config.folderId
+		? { icon: FolderOpen, title: "Folder is empty", description: "Drag messages onto this folder in the sidebar to file them here." }
+		: emptyStates[config.folder] ?? { icon: Inbox, title: config.emptyText, description: "" };
+	const showFloatingBar = selectedIds.length > 0 && !compact;
+
 	return (
-		<div className="flex h-full min-h-0 flex-col">
-			<div className={`flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 ${compact ? "px-4" : "px-6"}`}>
-				<div className="flex items-center gap-3 w-full">
-					<Tooltip label="Select all visible messages">
-						<Checkbox
-							checked={allVisibleSelected}
-							disabled={messages.length === 0}
-							onChange={(event) => toggleAllVisible(event.target.checked)}
-							className="h-4 w-4 rounded border-neutral-300"
-							aria-label="Select all visible messages"
-						/>
-					</Tooltip>
-					{selectedIds.length > 0 && !compact ? (
-						<BulkMessageToolbar
-							selectedCount={selectedIds.length}
-							hasUnreadSelection={hasUnreadSelection}
-							onAction={runSelectedAction}
-							onClearSelection={() => setSelectedMessages([])}
-							pending={pendingBulkAction}
-						/>
-					) : (
-						compact && (
-							<>
-								{/* <h1 className="truncate text-sm font-semibold text-neutral-900">
-									{config.title}
-								</h1>
-								<Badge variant="secondary">{total}</Badge> */}
-							</>
-						)
-					)}
+		<div className="relative flex h-full min-h-0 flex-col">
+			<div className={clsx("flex shrink-0 items-center gap-3 border-b border-border", compact ? "h-14 px-5" : "h-16 px-5 sm:px-6")}>
+				<Tooltip label="Select all visible">
+					<Checkbox
+						checked={allVisibleSelected}
+						disabled={messages.length === 0}
+						onChange={(event) => toggleAllVisible(event.target.checked)}
+						aria-label="Select all visible messages"
+					/>
+				</Tooltip>
+				<div className="flex min-w-0 flex-1 items-baseline gap-2.5 pl-1">
+					<h1 className={clsx("truncate text-foreground", compact ? "text-[15px] font-semibold tracking-[-0.01em]" : "font-display text-[28px] leading-none")}>
+						{config.title}
+					</h1>
+					<AnimatePresence mode="popLayout" initial={false}>
+						{titleUnread > 0 && (
+							<motion.span
+								key={titleUnread}
+								initial={{ opacity: 0, y: 4 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: -4 }}
+								className="shrink-0 text-[12.5px] font-medium tabular-nums text-primary"
+							>
+								{titleUnread} unread
+							</motion.span>
+						)}
+					</AnimatePresence>
 				</div>
-				{(selectedIds.length === 0 || compact) && (
-					<div className="flex items-center gap-2 text-neutral-500">
-						<span className="text-xs text-neutral-500 whitespace-nowrap">
-							{pageRange.start} - {pageRange.end} of {pageRange.total}
-						</span>
-						<Tooltip label="Previous page">
+				<div className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+					{config.folder === "inbox" && !compact && (
+						<Segmented
+							size="sm"
+							value={unreadOnly ? "unread" : "all"}
+							onChange={(value) => setUnreadOnly(value === "unread")}
+							options={[
+								{ value: "all", label: "All" },
+								{ value: "unread", label: "Unread" },
+							]}
+							className="mr-2 hidden sm:inline-flex"
+						/>
+					)}
+					{config.folder === "inbox" && compact && (
+						<Tooltip label={unreadOnly ? "Showing unread only" : "Show unread only"}>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-xs"
+								aria-label="Show unread emails only"
+								aria-pressed={unreadOnly}
+								onClick={() => setUnreadOnly((current) => !current)}
+								className={unreadOnly ? "bg-primary-soft text-primary-soft-foreground hover:bg-primary-soft" : undefined}
+							>
+								<ListFilter />
+							</Button>
+						</Tooltip>
+					)}
+					<span className={clsx("whitespace-nowrap text-xs tabular-nums text-subtle-foreground", compact && "hidden xl:inline")}>
+						{pageRange.start}–{pageRange.end} of {pageRange.total}
+					</span>
+					<div className="flex items-center">
+						<Tooltip label="Newer">
 							<Button
 								variant="ghost"
-								size="sm"
+								size="icon-xs"
 								disabled={offset === 0 || isLoading}
 								onClick={() => setOffset(Math.max(offset - limit, 0))}
 								aria-label="Previous page"
 							>
-								<ChevronLeft className="h-4 w-4" />
+								<ChevronLeft />
 							</Button>
 						</Tooltip>
-						<Tooltip label="Next page">
+						<Tooltip label="Older">
 							<Button
 								variant="ghost"
-								size="sm"
+								size="icon-xs"
 								disabled={offset + messages.length >= total || isLoading}
 								onClick={() => setOffset(offset + limit)}
 								aria-label="Next page"
 							>
-								<ChevronRight className="h-4 w-4" />
+								<ChevronRight />
 							</Button>
 						</Tooltip>
-						{config.folder === "inbox" && (
-							<Tooltip label={unreadOnly ? "Showing unread emails" : "Show unread emails only"}>
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									aria-label="Show unread emails only"
-									aria-pressed={unreadOnly}
-									onClick={() => setUnreadOnly((current) => !current)}
-									className={unreadOnly ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : undefined}
-								>
-									<ListFilter className="h-4 w-4" />
-								</Button>
-							</Tooltip>
-						)}
-						{!compact && headerIcons.map((Icon, index) => (
-							<Icon key={index} className="h-4 w-4" />
-						))}
 					</div>
+					{!compact && headerIcons.map((HeaderIcon, index) => (
+						<HeaderIcon key={index} className="size-4" />
+					))}
+				</div>
+			</div>
+
+			<div className={clsx("min-h-0 flex-1 overflow-y-auto overscroll-contain py-2 scrollbar-gutter-stable", showFloatingBar && "pb-24")}>
+				<AnimatePresence initial={false}>
+					{messages.map((message, index) => (
+						<motion.div
+							key={message.id}
+							layout="position"
+							initial={{ opacity: 0, y: 8 }}
+							animate={{ opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1], delay: Math.min(index * 0.018, 0.25) } }}
+							exit={{ opacity: 0, x: -24, height: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
+							className={compact ? "py-px" : undefined}
+						>
+							<MessageListRow
+								message={message}
+								config={config}
+								selected={selectedIds.includes(message.id)}
+								active={message.id === selectedMessageId}
+								compact={compact}
+								currentAccountName={currentAccountName}
+								showMailboxIndicator={!selectedMailbox}
+								onSelectedChange={updateSelectedMessage}
+								onMessageAction={(messageId, action) =>
+									runBulkMessageAction(expandSelectedIds([messageId]), action, action !== "read" && action !== "unread")
+								}
+								dragMessageIds={expandSelectedIds(selectedIds.includes(message.id) ? selectedIds : [message.id])}
+							/>
+						</motion.div>
+					))}
+				</AnimatePresence>
+				{isLoading && messages.length === 0 && <SkeletonRows count={8} compact={compact} />}
+				{!isLoading && messages.length === 0 && (
+					hasActiveFilters ? (
+						<EmptyState icon={SearchX} title="No matches" description="No messages match this search. Try fewer words or a different sender." className={compact ? "py-12" : "py-24"} />
+					) : (
+						<EmptyState icon={emptyState.icon} title={emptyState.title} description={emptyState.description} className={compact ? "py-12" : "py-24"} />
+					)
 				)}
 			</div>
 
-			<div className="min-h-0 flex-1 divide-y divide-neutral-100 overflow-y-auto overscroll-contain scrollbar-gutter-stable">
-				{messages.map((message) => (
-					<MessageListRow
-						key={message.id}
-						message={message}
-						config={config}
-						selected={selectedIds.includes(message.id)}
-						active={message.id === selectedMessageId}
-						compact={compact}
-						currentAccountName={currentAccountName}
-						onSelectedChange={updateSelectedMessage}
-						onMessageAction={(messageId, action) =>
-							runBulkMessageAction(expandSelectedIds([messageId]), action, action !== "read" && action !== "unread")
-						}
-						dragMessageIds={expandSelectedIds(selectedIds.includes(message.id) ? selectedIds : [message.id])}
-					/>
-				))}
-				{!isLoading && messages.length === 0 && (
-					<p className="px-6 py-4 text-sm text-neutral-500">
-						{hasActiveFilters ? "No messages match these filters" : config.emptyText}
-					</p>
+			<AnimatePresence>
+				{showFloatingBar && (
+					<motion.div
+						initial={{ opacity: 0, y: 24, scale: 0.96 }}
+						animate={{ opacity: 1, y: 0, scale: 1 }}
+						exit={{ opacity: 0, y: 16, scale: 0.98, transition: { duration: 0.15 } }}
+						transition={{ type: "spring", stiffness: 480, damping: 34 }}
+						className="pointer-events-none absolute inset-x-0 bottom-5 z-20 flex justify-center px-4"
+					>
+						<div className="pointer-events-auto rounded-2xl bg-popover p-1.5 shadow-float">
+							<BulkMessageToolbar
+								selectedCount={selectedIds.length}
+								hasUnreadSelection={hasUnreadSelection}
+								onAction={runSelectedAction}
+								onClearSelection={() => setSelectedMessages([])}
+								pending={pendingBulkAction}
+							/>
+						</div>
+					</motion.div>
 				)}
-			</div>
+			</AnimatePresence>
 		</div>
 	);
 }

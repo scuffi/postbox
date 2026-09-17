@@ -11,7 +11,7 @@ export async function POST() {
 	}
 
 	const checks = getSetupRequirementChecks(env);
-	if (checks.some((check) => !check.configured)) {
+	if (checks.some((check) => check.required !== false && !check.configured)) {
 		return NextResponse.json({ checks, migrated: false }, { status: 503 });
 	}
 

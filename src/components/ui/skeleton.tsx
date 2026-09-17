@@ -5,33 +5,30 @@ export function Skeleton({ className, ...props }: SkeletonProps) {
 	return (
 		<div
 			aria-hidden="true"
-			className={cn("animate-pulse rounded-md bg-neutral-200/80", className)}
+			className={cn(
+				"animate-shimmer rounded-md bg-[linear-gradient(90deg,var(--muted)_0%,color-mix(in_oklab,var(--muted)_40%,var(--card))_50%,var(--muted)_100%)] bg-[length:200%_100%]",
+				className,
+			)}
 			{...props}
 		/>
 	);
 }
 
-export function SkeletonRows({
-	count = 5,
-	compact = false,
-}: SkeletonRowsProps) {
+export function SkeletonRows({ count = 5, compact = false }: SkeletonRowsProps) {
 	return (
-		<div className="divide-y divide-neutral-100">
+		<div className="space-y-px p-2">
 			{Array.from({ length: count }, (_, index) => (
 				<div
 					key={index}
-					className={cn(
-						"flex items-center gap-3",
-						compact ? "px-4 py-3" : "px-6 py-4",
-					)}
+					className={cn("flex items-center gap-3 rounded-xl", compact ? "px-3 py-3" : "px-4 py-3.5")}
+					style={{ opacity: 1 - index * (0.7 / count) }}
 				>
-					<Skeleton className="h-4 w-4 shrink-0" />
-					<Skeleton className={cn("shrink-0", compact ? "h-9 w-9 rounded-full" : "h-5 w-36")} />
+					<Skeleton className="size-8 shrink-0 rounded-full" />
 					<div className="min-w-0 flex-1 space-y-2">
-						<Skeleton className="h-3.5 w-2/3" />
-						{compact && <Skeleton className="h-3 w-5/6" />}
+						<Skeleton className="h-3 w-1/3" />
+						<Skeleton className="h-3 w-3/4" />
 					</div>
-					<Skeleton className="h-3 w-12 shrink-0" />
+					<Skeleton className="h-2.5 w-10 shrink-0" />
 				</div>
 			))}
 		</div>

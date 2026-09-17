@@ -174,6 +174,12 @@ export async function GET(request: Request) {
 				: mailbox.displayName ?? mailbox.localPart,
 		]),
 	);
+	const mailboxAddressMap = new Map(
+		accessibleMailboxes.map((mailbox) => [
+			mailbox.id,
+			`${mailbox.localPart}@${mailbox.hostname}`.toLowerCase(),
+		]),
+	);
 	const contactMapsByUserId = new Map(
 		await Promise.all(
 			Array.from(new Set(rows.map((message) => message.userId))).map(async (userId) => [
@@ -194,6 +200,8 @@ export async function GET(request: Request) {
 		return {
 			...message,
 			snippet: buildSnippet(message.textBody, message.htmlBody) || message.snippet,
+			accountName: accountName ?? null,
+			accountAddress: message.mailboxId ? mailboxAddressMap.get(message.mailboxId) ?? null : null,
 			fromContactName:
 				(message.direction === "outbound" ? accountName : null) ??
 				contactMap?.get(normalizeEmailAddress(message.fromAddr)) ??

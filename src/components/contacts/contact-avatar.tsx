@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { ContactAvatarProps } from "./contact-avatar-types";
 import {
 	getContactAvatarInitial,
+	getContactAvatarTint,
 	getManagedContactAvatarUrl,
 } from "./contact-avatar-utils";
 
@@ -62,7 +63,7 @@ export function ContactAvatar({
 			<img
 				src={avatarUrl}
 				alt=""
-				className={cn("h-8 w-8 shrink-0 rounded-full border border-neutral-200 object-cover", className)}
+				className={cn("size-8 shrink-0 rounded-full object-cover ring-1 ring-black/5 dark:ring-white/10", className)}
 				onError={() => {
 					if (managedAvatarUrl) setImageFailed(true);
 					else if (managedAvatar) setManagedAvatar(false);
@@ -74,7 +75,11 @@ export function ContactAvatar({
 
 	return (
 		<span
-			className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-sm font-semibold text-neutral-700", className)}
+			className={cn(
+				"flex size-8 shrink-0 select-none items-center justify-center rounded-full text-[12.5px] font-semibold ring-1 ring-inset ring-black/[0.04] dark:ring-white/[0.06]",
+				getContactAvatarTint(address || name),
+				className,
+			)}
 			aria-hidden
 		>
 			{getContactAvatarInitial(name, address)}

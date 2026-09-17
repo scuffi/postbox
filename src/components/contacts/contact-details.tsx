@@ -7,6 +7,7 @@ import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
@@ -86,7 +87,7 @@ export function ContactDetailsTrigger({
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				className={`${className ?? ""} rounded-sm text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200`}
+				className={`${className ?? ""} rounded-sm text-left decoration-border-strong underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30`}
 			>
 				{shownName}
 			</button>
@@ -123,30 +124,35 @@ export function ContactDetailsTrigger({
 								disabled
 							/>
 						</div>
-						<div className="grid gap-3 rounded-lg bg-neutral-50 p-3 text-sm sm:grid-cols-2">
+						<div className="grid gap-3 rounded-xl bg-muted p-3.5 text-sm ring-1 ring-inset ring-border sm:grid-cols-2">
 							<div>
-								<p className="text-xs font-medium uppercase text-neutral-400">Source</p>
-								<p className="mt-1 capitalize text-neutral-700">{contact?.source ?? "Email"}</p>
+								<p className="text-[11px] font-medium uppercase tracking-[0.06em] text-subtle-foreground">Source</p>
+								<p className="mt-1 capitalize text-foreground/80">{contact?.source ?? "Email"}</p>
 							</div>
 							<div>
-								<p className="text-xs font-medium uppercase text-neutral-400">Last seen</p>
-								<p className="mt-1 text-neutral-700">
+								<p className="text-[11px] font-medium uppercase tracking-[0.06em] text-subtle-foreground">Last seen</p>
+								<p className="mt-1 text-foreground/80">
 									{contact?.lastSeenAt ? dayjs(contact.lastSeenAt).format("MMM DD, YYYY") : "Unknown"}
 								</p>
 							</div>
 							{contact?.blocked && (
-								<p className="text-sm font-medium text-red-600">Blocked contact</p>
+								<p className="text-sm font-medium text-destructive">Blocked contact</p>
 							)}
 						</div>
-						{error && <p className="text-sm text-red-600">{error}</p>}
+						{error && <p className="text-sm text-destructive">{error}</p>}
+					</div>
+					<DialogFooter>
+						<Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+							Cancel
+						</Button>
 						<Button
 							type="button"
 							onClick={saveContact}
 							disabled={loading || saving || !displayName.trim()}
 						>
-							{saving ? "Saving..." : "Save contact"}
+							{saving ? "Saving…" : "Save contact"}
 						</Button>
-					</div>
+					</DialogFooter>
 				</DialogContent>
 			</Dialog>
 		</>

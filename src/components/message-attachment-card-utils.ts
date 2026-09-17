@@ -23,7 +23,7 @@ export function getAttachmentVisual(
 	if (previewKind === "image") {
 		return {
 			icon: Image,
-			iconClassName: "bg-blue-50 text-blue-700",
+			iconClassName: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
 			label: "Image",
 			thumbnail: "image",
 		};
@@ -31,7 +31,7 @@ export function getAttachmentVisual(
 	if (previewKind === "video") {
 		return {
 			icon: FileVideoCamera,
-			iconClassName: "bg-rose-50 text-rose-700",
+			iconClassName: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
 			label: "Video",
 			thumbnail: "video",
 		};
@@ -39,7 +39,7 @@ export function getAttachmentVisual(
 	if (previewKind === "audio") {
 		return {
 			icon: Music,
-			iconClassName: "bg-orange-50 text-orange-700",
+			iconClassName: "bg-orange-500/10 text-orange-700 dark:text-orange-300",
 			label: "Audio",
 			thumbnail: null,
 		};
@@ -47,7 +47,7 @@ export function getAttachmentVisual(
 	if (previewKind === "pdf") {
 		return {
 			icon: FileText,
-			iconClassName: "bg-red-50 text-red-700",
+			iconClassName: "bg-red-500/10 text-red-700 dark:text-red-300",
 			label: "PDF",
 			thumbnail: null,
 		};
@@ -60,7 +60,7 @@ export function getAttachmentVisual(
 	) {
 		return {
 			icon: FileSpreadsheet,
-			iconClassName: "bg-emerald-50 text-emerald-700",
+			iconClassName: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
 			label: "Spreadsheet",
 			thumbnail: null,
 		};
@@ -72,7 +72,7 @@ export function getAttachmentVisual(
 	) {
 		return {
 			icon: Presentation,
-			iconClassName: "bg-amber-50 text-amber-700",
+			iconClassName: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
 			label: "Presentation",
 			thumbnail: null,
 		};
@@ -85,7 +85,7 @@ export function getAttachmentVisual(
 	) {
 		return {
 			icon: FileArchive,
-			iconClassName: "bg-violet-50 text-violet-700",
+			iconClassName: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
 			label: "Archive",
 			thumbnail: null,
 		};
@@ -99,7 +99,7 @@ export function getAttachmentVisual(
 	) {
 		return {
 			icon: FileCode,
-			iconClassName: "bg-cyan-50 text-cyan-700",
+			iconClassName: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
 			label: "Code",
 			thumbnail: null,
 		};
@@ -107,7 +107,7 @@ export function getAttachmentVisual(
 	if (previewKind === "text" || type.includes("word") || /\.(doc|docx|odt|rtf|txt)$/.test(filename)) {
 		return {
 			icon: FileType,
-			iconClassName: "bg-sky-50 text-sky-700",
+			iconClassName: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
 			label: "Document",
 			thumbnail: null,
 		};
@@ -115,7 +115,7 @@ export function getAttachmentVisual(
 
 	return {
 		icon: FileText,
-		iconClassName: "bg-neutral-100 text-neutral-600",
+		iconClassName: "bg-muted text-muted-foreground",
 		label: "File",
 		thumbnail: null,
 	};

@@ -1,10 +1,18 @@
 "use client";
 
 import { createElement, useEffect, useState } from "react";
-import { Ban, Forward, Mail, MailOpen, MoreVertical, Reply, ReplyAll, Star } from "lucide-react";
+import { Ban, Forward, Mail, MailOpen, MoreHorizontal, Reply, ReplyAll, Star } from "lucide-react";
+import { motion } from "motion/react";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { useCompose } from "@/components/compose/compose-context";
 import { getOwnAddressForMessage } from "@/app/(dashboard)/inbox/[messageId]/utils";
-import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import {
 	blockMessageContact,
@@ -19,6 +27,9 @@ import {
 import { toggleMessageStar } from "./message-list-row-actions-utils";
 import type { ThreadMessageActionsProps } from "./thread-message-actions-types";
 import type { ReplyMode } from "@/components/message-actions/types";
+
+const iconButton =
+	"flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-4";
 
 export function ThreadMessageActions({
 	message,
@@ -43,7 +54,7 @@ export function ThreadMessageActions({
 		setPending(true);
 		setError(null);
 		try {
-			setStarred(await toggleMessageStar(message.id));
+			setStarred((await toggleMessageStar(message.id)).starred);
 		} catch (nextError) {
 			setError(nextError instanceof Error ? nextError.message : "Unable to update star");
 		} finally {
@@ -125,83 +136,66 @@ export function ThreadMessageActions({
 
 	return (
 		<div className="flex items-center gap-0.5">
-			{error && <span className="mr-1 max-w-32 truncate text-xs text-red-600" title={error}>{error}</span>}
+			{error && <span className="mr-1 max-w-32 truncate text-xs text-destructive" title={error}>{error}</span>}
 			<Tooltip label={starred ? "Remove star" : "Star"}>
-				<Button
+				<button
 					type="button"
-					variant="ghost"
-					size="sm"
-					className="h-8 w-8 px-0"
+					className={cn(iconButton, "hover:bg-gold-soft")}
 					aria-label={starred ? "Remove star" : "Star"}
 					aria-pressed={starred}
 					disabled={pending}
 					onClick={() => void onToggleStar()}
 				>
-					<Star className={starred ? "h-4 w-4 fill-amber-400 text-amber-400" : "h-4 w-4"} />
-				</Button>
+					<motion.span key={String(starred)} initial={{ scale: 0.5, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 600, damping: 15 }} className="flex">
+						<Star className={starred ? "fill-gold text-gold" : undefined} />
+					</motion.span>
+				</button>
 			</Tooltip>
 			<Tooltip label="Reply">
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					className="h-8 w-8 px-0"
-					aria-label="Reply"
-					disabled={pending}
-					onClick={() => void onReply("reply")}
-				>
-					<Reply className="h-4 w-4" />
-				</Button>
+				<button type="button" className={iconButton} aria-label="Reply" disabled={pending} onClick={() => void onReply("reply")}>
+					<Reply />
+				</button>
 			</Tooltip>
-			<div className="relative">
-				<Tooltip label="More actions">
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						className="h-8 w-8 px-0"
-						aria-label="More actions"
-						aria-expanded={moreOpen}
-						disabled={pending}
-						onClick={() => setMoreOpen((open) => !open)}
-					>
-						<MoreVertical className="h-4 w-4" />
-					</Button>
+			<DropdownMenu open={moreOpen} onOpenChange={setMoreOpen}>
+				<Tooltip label="More">
+					<DropdownMenuTrigger asChild>
+						<button type="button" className={iconButton} aria-label="More actions" disabled={pending}>
+							<MoreHorizontal />
+						</button>
+					</DropdownMenuTrigger>
 				</Tooltip>
-				{moreOpen && (
-					<div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-neutral-200 bg-white p-2 text-neutral-700 shadow-lg">
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onReply("reply")}>
-							<Reply className="h-4 w-4" /> Reply
-						</button>
-						{canReplyAll && (
-							<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onReply("replyAll")}>
-								<ReplyAll className="h-4 w-4" /> Reply all
-							</button>
-						)}
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onForward()}>
-							<Forward className="h-4 w-4" /> Forward
-						</button>
-						<hr className="my-1 border-neutral-100" />
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onMessageAction(message.read ? "unread" : "read")}>
-							{message.read ? <Mail className="h-4 w-4" /> : <MailOpen className="h-4 w-4" />}
-							{message.read ? "Mark as unread" : "Mark as read"}
-						</button>
-						{moveActions.map((item) => (
-							<button key={item.action} type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onMessageAction(item.action)}>
-								{createElement(item.icon, { size: 16 })} {item.label}
-							</button>
-						))}
-						{message.direction === "inbound" && mailboxId && (
-							<>
-								<hr className="my-1 border-neutral-100" />
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onBlock()}>
-									<Ban className="h-4 w-4" /> Block contact
-								</button>
-							</>
-						)}
-					</div>
-				)}
-			</div>
+				<DropdownMenuContent align="end" className="w-52">
+					<DropdownMenuItem onSelect={() => void onReply("reply")}>
+						<Reply /> Reply
+					</DropdownMenuItem>
+					{canReplyAll && (
+						<DropdownMenuItem onSelect={() => void onReply("replyAll")}>
+							<ReplyAll /> Reply all
+						</DropdownMenuItem>
+					)}
+					<DropdownMenuItem onSelect={() => void onForward()}>
+						<Forward /> Forward
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem onSelect={() => void onMessageAction(message.read ? "unread" : "read")}>
+						{message.read ? <Mail /> : <MailOpen />}
+						{message.read ? "Mark as unread" : "Mark as read"}
+					</DropdownMenuItem>
+					{moveActions.map((item) => (
+						<DropdownMenuItem key={item.action} onSelect={() => void onMessageAction(item.action)}>
+							{createElement(item.icon)} {item.label}
+						</DropdownMenuItem>
+					))}
+					{message.direction === "inbound" && mailboxId && (
+						<>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem destructive onSelect={() => void onBlock()}>
+								<Ban /> Block contact
+							</DropdownMenuItem>
+						</>
+					)}
+				</DropdownMenuContent>
+			</DropdownMenu>
 		</div>
 	);
 }

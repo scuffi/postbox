@@ -39,8 +39,8 @@ export function MailboxSignatureForm() {
 		}
 	}
 
-	if (isLoading) return <p className="text-sm text-neutral-500">Loading inbox…</p>;
-	if (!selectedMailbox) return <p className="text-sm text-neutral-500">Select an inbox to configure its signature.</p>;
+	if (isLoading) return <p className="text-sm text-muted-foreground">Loading inbox…</p>;
+	if (!selectedMailbox) return <p className="text-sm text-muted-foreground">Select an inbox to configure its signature.</p>;
 
 	const address = `${selectedMailbox.localPart}@${selectedMailbox.hostname}`;
 	const canManage = selectedMailbox.permission === "full_access";
@@ -57,16 +57,16 @@ export function MailboxSignatureForm() {
 					rows={6}
 					disabled={!canManage || saving}
 				/>
-				<p className="text-xs leading-5 text-neutral-500">
+				<p className="text-xs leading-5 text-muted-foreground">
 					This signature is added when composing from the selected inbox.
 				</p>
 			</div>
-			<div className="flex items-center gap-3">
+			<div className="flex items-center gap-3 border-t border-border pt-4">
 				<Button type="submit" disabled={!canManage || saving || signature.trim() === savedSignature}>
-					{saving ? "Saving..." : "Save signature"}
+					{saving ? "Saving…" : "Save signature"}
 				</Button>
-				{!canManage && <p className="text-sm text-neutral-500">Full access is required to edit this signature.</p>}
-				{status && <p className="text-sm text-neutral-500">{status}</p>}
+				{!canManage && <p className="text-sm text-muted-foreground">Full access is required to edit this signature.</p>}
+				{status && <p className="animate-fade-in text-[13px] text-muted-foreground">{status}</p>}
 			</div>
 		</form>
 	);

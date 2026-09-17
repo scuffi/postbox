@@ -7,6 +7,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -14,12 +15,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { CheckCircle2, LoaderCircle, Plus } from "lucide-react";
+import { CheckCircle2, Globe2, LoaderCircle, Plus } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListCard } from "@/components/ui/list-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/auth/client";
 import type { DnsStatusSummary, Domain, DomainDnsView, DomainPreflight } from "./types";
 import DomainItemCard from "./DomainItemCard";
 import DomainDnsDetails from "./DomainDnsDetails";
-import { CardGridSkeleton } from "@/components/page-skeletons";
 import { checkDomain } from "./utils";
 
 export default function DomainsPage() {
@@ -127,19 +131,19 @@ export default function DomainsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-medium">Domains</h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            {managesDns
-              ? "Domains must be on your Cloudflare account. Email Routing is enabled automatically, and Email Sending can be enabled when available."
-              : "Add the domains this server receives mail for. Open DNS on a domain to see the MX, SPF and DMARC records to create."}
-          </p>
-        </div>
+      <PageHeader
+        className="mb-2"
+        title="Domains"
+        description={
+          managesDns
+            ? "Domains must be on your Cloudflare account. Email Routing is enabled automatically, and Email Sending can be enabled when available."
+            : "Add the domains this server receives mail for. Open DNS records on a domain to see the MX, SPF and DMARC records to create."
+        }
+        actions={
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4" />
+              <Plus />
               New domain
             </Button>
           </DialogTrigger>
@@ -147,33 +151,38 @@ export default function DomainsPage() {
             <DialogHeader>
               <DialogTitle>Add domain</DialogTitle>
               <DialogDescription>
-                Connect a Cloudflare zone and choose whether Mailflare should
+                Connect a Cloudflare zone and choose whether postbox should
                 provision Email Sending.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="hostname">Hostname</Label>
-                <Input
-                  id="hostname"
-                  value={hostname}
-                  onChange={(e) => {
-                    setHostname(e.target.value);
-                    if (domainCheck?.hostname !== e.target.value.toLowerCase().trim()) {
-                      setDomainCheck(null);
-                      setEnableSending(false);
-                    }
-                  }}
-                  onBlur={() => void inspectDomain()}
-                  placeholder="example.com"
-                />
+                <div className="relative">
+                  <Globe2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle-foreground" />
+                  <Input
+                    id="hostname"
+                    value={hostname}
+                    className="pl-9"
+                    onChange={(e) => {
+                      setHostname(e.target.value);
+                      if (domainCheck?.hostname !== e.target.value.toLowerCase().trim()) {
+                        setDomainCheck(null);
+                        setEnableSending(false);
+                      }
+                    }}
+                    onBlur={() => void inspectDomain()}
+                    placeholder="example.com"
+                    autoFocus
+                  />
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 px-4 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl bg-muted px-4 py-3 ring-1 ring-inset ring-border">
                 <div>
                   <Label htmlFor="enable-sending">Enable sending</Label>
-                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {domainChecking
-                      ? "Checking Cloudflare access..."
+                      ? "Checking Cloudflare access…"
                       : domainCheck
                         ? enableSending
                           ? "Required to send email."
@@ -182,7 +191,7 @@ export default function DomainsPage() {
                   </p>
                 </div>
                 {domainChecking ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin text-neutral-500" />
+                  <LoaderCircle className="size-4 animate-spin text-muted-foreground" />
                 ) : (
                   <Switch
                     id="enable-sending"
@@ -193,18 +202,18 @@ export default function DomainsPage() {
                 )}
               </div>
               {domainCheck && (
-                <div className="flex items-center gap-3 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Domain found in Cloudflare as {domainCheck.zone.name}
+                <div className="flex animate-fade-up items-center gap-2.5 rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="size-4" />
+                  Found in Cloudflare as {domainCheck.zone.name}
                 </div>
               )}
               {domainCheckError && (
-                <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                   {domainCheckError}
                 </p>
               )}
               {create.isError && (
-                <div className="space-y-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="space-y-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                   <p>{(create.error as Error).message}</p>
                   <div className="space-y-2">
                     <p className="font-medium">
@@ -223,42 +232,51 @@ export default function DomainsPage() {
                   </div>
                 </div>
               )}
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+                Cancel
+              </Button>
               <Button
                 onClick={() => create.mutate()}
                 disabled={!hostname || domainChecking || create.isPending}
               >
-                {create.isPending ? "Adding..." : "Add domain"}
+                {create.isPending ? "Adding…" : "Add domain"}
               </Button>
-            </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-      <section className="space-y-3">
-        {/* <div className="flex items-center justify-between">
-					<span className="text-sm text-neutral-500">{(data?.domains ?? []).length} total</span>
-				</div> */}
-        {isLoading && (
-          <CardGridSkeleton />
+        }
+      />
+      <section>
+        {isLoading ? (
+          <ListCard>
+            <SkeletonRows count={3} />
+          </ListCard>
+        ) : (data?.domains ?? []).length === 0 ? (
+          <ListCard>
+            <EmptyState
+              icon={Globe2}
+              title="No domains yet"
+              description="Add the first domain you want to receive mail for."
+            />
+          </ListCard>
+        ) : (
+          <ListCard>
+            {(data?.domains ?? []).map((d) => {
+              const dns = data?.dns?.[d.id];
+              return (
+                <DomainItemCard
+                  key={d.id}
+                  dns={dns}
+                  loadDns={loadDns}
+                  item={d}
+                  remove={remove}
+                />
+              );
+            })}
+          </ListCard>
         )}
-        {!isLoading && (data?.domains ?? []).length === 0 && (
-          <p className="rounded-2xl bg-white px-5 py-4 text-sm text-neutral-500">
-            No domains yet
-          </p>
-        )}
-        <div className="grid gap-3">
-          {(data?.domains ?? []).map((d) => {
-            const dns = data?.dns?.[d.id];
-            return (
-              <DomainItemCard
-                key={d.id}
-                dns={dns}
-                loadDns={loadDns}
-                item={d}
-                remove={remove}
-              />
-            );
-          })}
-        </div>
       </section>
       {dnsView && (
         <DomainDnsDetails domain={dnsView.domain} dns={dnsView.dns} />

@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import {
+	appSettings,
 	domains,
 	mailboxes,
 	messages,
@@ -12,6 +13,7 @@ import { upsertContactFromAddress } from "@/lib/contacts/service";
 import { buildSnippet } from "@/lib/email/parse";
 import { newId } from "@/lib/ids";
 import type {
+	SeedDomainMap,
 	SeedMailboxKey,
 	SeedMailboxMap,
 	SeedMessageDefinition,
@@ -24,13 +26,27 @@ export const demoCredentials = {
 
 const demoDomain = "example.com";
 
+/**
+ * Seed domains exercise three shapes the UI groups in a Discord-style rail:
+ * an apex domain, a subdomain (which Cloudflare routes on the parent zone),
+ * and a second independent apex domain.
+ */
+const seedDomainDefinitions: { hostname: string; zoneId: string }[] = [
+	{ hostname: demoDomain, zoneId: "00000000000000000000000000000000" },
+	{ hostname: "outbound.example.com", zoneId: "00000000000000000000000000000000" },
+	{ hostname: "acme.dev", zoneId: "11111111111111111111111111111111" },
+];
+
 const seedMailboxDefinitions: {
 	key: SeedMailboxKey;
+	hostname: string;
 	localPart: string;
 	displayName: string;
 }[] = [
-	{ key: "support", localPart: "support", displayName: "Support" },
-	{ key: "billing", localPart: "billing", displayName: "Billing" },
+	{ key: "support", hostname: "example.com", localPart: "support", displayName: "Support" },
+	{ key: "billing", hostname: "example.com", localPart: "billing", displayName: "Billing" },
+	{ key: "donotreply", hostname: "outbound.example.com", localPart: "donotreply", displayName: "No Reply" },
+	{ key: "hello", hostname: "acme.dev", localPart: "hello", displayName: "Acme Team" },
 ];
 
 const seedMessages: SeedMessageDefinition[] = [
@@ -74,6 +90,32 @@ const seedMessages: SeedMessageDefinition[] = [
 		providerMessageId: "<seed-inbox-invoice@example.test>",
 	},
 	{
+		mailbox: "donotreply",
+		direction: "inbound",
+		status: "received",
+		fromAddr: `"Mailer Daemon" <postmaster@example.test>`,
+		toAddr: `"No Reply" <donotreply@outbound.example.com>`,
+		subject: "Undelivered: scheduled report bounced",
+		textBody:
+			"The recipient server rejected the scheduled report because the address does not exist. This address is not monitored, but the bounce landed here for tracking.",
+		read: false,
+		minutesAgo: 30,
+		providerMessageId: "<seed-inbox-donotreply@example.test>",
+	},
+	{
+		mailbox: "hello",
+		direction: "inbound",
+		status: "received",
+		fromAddr: `"Globex Sales" <sales@globex.test>`,
+		toAddr: `"Acme Team" <hello@acme.dev>`,
+		subject: "Partnership intro",
+		textBody:
+			"Hi team, we would love to explore a partnership for the upcoming quarter. Can we schedule a call?",
+		read: false,
+		minutesAgo: 65,
+		providerMessageId: "<seed-inbox-hello@example.test>",
+	},
+	{
 		mailbox: "support",
 		direction: "outbound",
 		status: "sent",
@@ -98,6 +140,32 @@ const seedMessages: SeedMessageDefinition[] = [
 		read: true,
 		minutesAgo: 35,
 		providerMessageId: "<seed-sent-invoice@example.test>",
+	},
+	{
+		mailbox: "donotreply",
+		direction: "outbound",
+		status: "sent",
+		fromAddr: `"No Reply" <donotreply@outbound.example.com>`,
+		toAddr: `"Subscriber List" <digest@lists.test>`,
+		subject: "Weekly digest",
+		textBody:
+			"Your weekly digest is attached. This is an automated message from a sending-only subdomain address.",
+		read: true,
+		minutesAgo: 55,
+		providerMessageId: "<seed-sent-donotreply@example.test>",
+	},
+	{
+		mailbox: "hello",
+		direction: "outbound",
+		status: "sent",
+		fromAddr: `"Acme Team" <hello@acme.dev>`,
+		toAddr: `"Globex Sales" <sales@globex.test>`,
+		subject: "Re: Partnership intro",
+		textBody:
+			"Great to hear from you. Thursday afternoon works for a call — I will send an invite.",
+		read: true,
+		minutesAgo: 41,
+		providerMessageId: "<seed-sent-hello@example.test>",
 	},
 	{
 		mailbox: "support",
@@ -187,42 +255,29 @@ const seedMessages: SeedMessageDefinition[] = [
 		minutesAgo: 4,
 	},
 	{
-		mailbox: "billing",
+		mailbox: "hello",
 		direction: "outbound",
 		status: "queued",
-		fromAddr: `"Billing" <billing@${demoDomain}>`,
+		fromAddr: `"Acme Team" <hello@acme.dev>`,
 		toAddr: `"Umbrella AP" <ap@umbrella.test>`,
-		subject: "Queued payment receipt",
+		subject: "Queued onboarding note",
 		textBody:
-			"This seeded receipt is queued so API and background-job views can exercise pending delivery states.",
+			"This seeded outbound message from the second domain is queued and awaiting delivery.",
 		read: true,
 		minutesAgo: 17,
 	},
-	{
-		mailbox: "support",
-		direction: "outbound",
-		status: "failed",
-		fromAddr: `"Support" <support@${demoDomain}>`,
-		toAddr: `"Invalid Bounce" <bounce@invalid.test>`,
-		subject: "Failed SMTP handoff",
-		textBody:
-			"This seeded message failed delivery after the provider rejected the recipient address.",
-		read: true,
-		minutesAgo: 73,
-	},
-	{
-		mailbox: "billing",
-		direction: "outbound",
-		status: "failed",
-		fromAddr: `"Billing" <billing@${demoDomain}>`,
-		toAddr: `"Closed Partner Account" <closed-account@partner.test>`,
-		subject: "Failed billing notice",
-		textBody:
-			"This seeded billing notice failed because the destination mailbox no longer exists.",
-		read: true,
-		minutesAgo: 181,
-	},
 ];
+
+export async function ensureDemoBranding(env: CloudflareEnv) {
+	const db = getDb(env);
+	await db
+		.insert(appSettings)
+		.values({ id: "default", appName: "postbox" })
+		.onConflictDoUpdate({
+			target: appSettings.id,
+			set: { appName: "postbox", updatedAt: new Date() },
+		});
+}
 
 export async function ensureDemoUser(env: CloudflareEnv) {
 	const db = getDb(env);
@@ -239,51 +294,62 @@ export async function ensureDemoUser(env: CloudflareEnv) {
 		email: demoCredentials.email,
 		passwordHash: hashPassword(demoCredentials.password),
 		name: "Demo User",
+		role: "admin",
 	});
 
 	const [created] = await db.select().from(users).where(eq(users.id, id)).limit(1);
 	return created!;
 }
 
-export async function ensureDemoDomain(env: CloudflareEnv, userId: string) {
+export async function ensureDemoDomains(env: CloudflareEnv, userId: string): Promise<SeedDomainMap> {
 	const db = getDb(env);
-	const [existing] = await db
-		.select()
-		.from(domains)
-		.where(eq(domains.hostname, demoDomain))
-		.limit(1);
-	if (existing) return existing;
+	const result: SeedDomainMap = {};
 
-	const id = newId("dom");
-	await db.insert(domains).values({
-		id,
-		userId,
-		hostname: demoDomain,
-		zoneId: "00000000000000000000000000000000",
-		status: "active",
-		routingEnabled: true,
-		sendingRequested: true,
-		sendingEnabled: true,
-	});
+	for (const definition of seedDomainDefinitions) {
+		const [existing] = await db
+			.select()
+			.from(domains)
+			.where(eq(domains.hostname, definition.hostname))
+			.limit(1);
+		if (existing) {
+			result[definition.hostname] = existing;
+			continue;
+		}
 
-	const [created] = await db.select().from(domains).where(eq(domains.id, id)).limit(1);
-	return created!;
+		const id = newId("dom");
+		await db.insert(domains).values({
+			id,
+			userId,
+			hostname: definition.hostname,
+			zoneId: definition.zoneId,
+			status: "active",
+			routingEnabled: true,
+			sendingRequested: true,
+			sendingEnabled: true,
+		});
+
+		const [created] = await db.select().from(domains).where(eq(domains.id, id)).limit(1);
+		result[definition.hostname] = created!;
+	}
+
+	return result;
 }
 
 export async function ensureDemoMailboxes(
 	env: CloudflareEnv,
 	userId: string,
-	domainId: string,
+	domainMap: SeedDomainMap,
 ): Promise<SeedMailboxMap> {
 	const db = getDb(env);
 	const entries = await Promise.all(
 		seedMailboxDefinitions.map(async (definition) => {
+			const domain = domainMap[definition.hostname];
 			const [existing] = await db
 				.select()
 				.from(mailboxes)
 				.where(
 					and(
-						eq(mailboxes.domainId, domainId),
+						eq(mailboxes.domainId, domain.id),
 						eq(mailboxes.localPart, definition.localPart),
 					),
 				)
@@ -294,7 +360,7 @@ export async function ensureDemoMailboxes(
 			await db.insert(mailboxes).values({
 				id,
 				userId,
-				domainId,
+				domainId: domain.id,
 				localPart: definition.localPart,
 				displayName: definition.displayName,
 			});

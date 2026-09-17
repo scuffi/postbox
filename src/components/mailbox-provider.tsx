@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import {
+	ALL_MAILBOXES_ID,
 	clearMailboxesCache,
 	fetchMailboxOptions,
 	isIdentityMailbox,
@@ -69,6 +70,11 @@ export function MailboxProvider({ children }: { children: ReactNode }) {
 				setMailboxes(items);
 
 				const storedId = localStorage.getItem(SELECTED_MAILBOX_STORAGE_KEY);
+				if (storedId === ALL_MAILBOXES_ID) {
+					// Unified inbox is a first-class view; keep it selected.
+					setSelectedMailboxState(null);
+					return;
+				}
 				if (storedId) {
 					const found = items.find((mb) => mb.id === storedId);
 					if (found) {
@@ -77,11 +83,9 @@ export function MailboxProvider({ children }: { children: ReactNode }) {
 					}
 				}
 
-				const primary = items.find((mb) => mb.isPrimary) ?? items[0] ?? null;
-				if (primary) {
-					setSelectedMailboxState(primary);
-					localStorage.setItem(SELECTED_MAILBOX_STORAGE_KEY, primary.id);
-				}
+				// No (or stale) preference: default to the unified inbox.
+				setSelectedMailboxState(null);
+				localStorage.setItem(SELECTED_MAILBOX_STORAGE_KEY, ALL_MAILBOXES_ID);
 			})
 			.catch(() => {})
 			.finally(() => {
@@ -142,7 +146,7 @@ export function MailboxProvider({ children }: { children: ReactNode }) {
 			setMailboxes((items) => items.map((item) => (item.id === mb.id && item !== mb ? mb : item)));
 			localStorage.setItem(SELECTED_MAILBOX_STORAGE_KEY, mb.id);
 		} else {
-			localStorage.removeItem(SELECTED_MAILBOX_STORAGE_KEY);
+			localStorage.setItem(SELECTED_MAILBOX_STORAGE_KEY, ALL_MAILBOXES_ID);
 		}
 	}, []);
 

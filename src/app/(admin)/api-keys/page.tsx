@@ -56,7 +56,7 @@ export default function ApiKeysPage() {
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between gap-4">
-				<h1 className="text-2xl font-semibold">API Keys</h1>
+				<h1 className="font-display text-[40px] leading-[1.05] text-foreground">API keys</h1>
 				<Dialog open={createOpen} onOpenChange={setCreateOpen}>
 					<DialogTrigger asChild>
 						<Button>
@@ -75,7 +75,7 @@ export default function ApiKeysPage() {
 								<Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Production app" />
 							</div>
 							{create.isError && (
-								<p className="text-sm text-red-600">{(create.error as Error).message}</p>
+								<p className="text-sm text-destructive">{(create.error as Error).message}</p>
 							)}
 							<Button onClick={() => create.mutate()} disabled={!name || create.isPending}>
 								{create.isPending ? "Creating..." : "Create key"}
@@ -85,22 +85,22 @@ export default function ApiKeysPage() {
 				</Dialog>
 			</div>
 			{newKey && (
-				<Card className="border-blue-600/10 bg-blue-400/10">
-					<CardContent className="pt-6">
-						<p className="text-sm font-medium text-blue-600">Copy your key now:</p>
+				<Card className="border-primary/10 bg-primary-soft">
+					<CardContent>
+						<p className="text-sm font-medium text-primary">Copy your key now:</p>
 						<code className="block mt-2 text-xs break-all font-bold">{newKey}</code>
 					</CardContent>
 				</Card>
 			)}
 			<section className="space-y-3">
 				<div className="flex items-center justify-between">
-					<span className="text-sm text-neutral-500">{(data?.apiKeys ?? []).length} total</span>
+					<span className="text-sm text-muted-foreground">{(data?.apiKeys ?? []).length} total</span>
 				</div>
 				{isLoading && (
 					<CardGridSkeleton />
 				)}
 				{!isLoading && (data?.apiKeys ?? []).length === 0 && (
-					<p className="rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-500">
+					<p className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
 						No API keys yet
 					</p>
 				)}
@@ -108,14 +108,14 @@ export default function ApiKeysPage() {
 					{(data?.apiKeys ?? []).map((key) => (
 						<div
 							key={key.id}
-							className="flex min-h-24 items-start gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm shadow-neutral-100"
+							className="flex min-h-24 items-start gap-3 rounded-lg border border-border bg-card p-4 shadow-sm shadow-neutral-100"
 						>
-							<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600">
+							<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
 								<KeyRound className="h-5 w-5" />
 							</span>
 							<span className="min-w-0 flex-1 space-y-2">
-								<span className="block truncate text-sm font-semibold text-neutral-900">{key.name}</span>
-								<span className="block truncate no-font-mono text-sm text-neutral-500">{key.prefix}...</span>
+								<span className="block truncate text-sm font-semibold text-foreground">{key.name}</span>
+								<span className="block truncate no-font-mono text-sm text-muted-foreground">{key.prefix}...</span>
 								<span className="flex flex-wrap gap-1">
 									{parseApiKeyScopes(key.scopes).map((scope) => (
 										<Badge key={scope} variant="outline">
