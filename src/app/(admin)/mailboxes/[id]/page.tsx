@@ -37,7 +37,7 @@ export default function MailboxSettingsPage() {
   const mailboxId = params.id;
   const qc = useQueryClient();
   const [displayName, setDisplayName] = useState("");
-  const [useAllDomains, setUseAllDomains] = useState(true);
+  const [useAllDomains, setUseAllDomains] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [aliasLocalPart, setAliasLocalPart] = useState("");
   const [aliasDomainId, setAliasDomainId] = useState("");

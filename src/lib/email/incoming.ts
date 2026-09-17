@@ -6,7 +6,8 @@ import { MAILFLARE_FORWARDED_HEADER } from "@/lib/email/account-forwarding";
  * Resolves the routing decision for a live inbound message. Used by the Worker `email`
  * handler, where `forward()` and `setReject()` are still available on the message.
  *
- * Never throws: a routing failure must not stop mail from being stored.
+ * An address with no mailbox, alias or catch-all resolves to a reject so the sender gets
+ * a bounce. Never throws: a routing failure must not stop mail from being stored.
  */
 export async function resolveIncomingMail(
 	env: CloudflareEnv,
@@ -16,7 +17,12 @@ export async function resolveIncomingMail(
 	try {
 		const db = getDb(env);
 		const decision = await resolveInboundAddress(db, to, from);
-		if (decision?.ruleId) {
+		// Nothing accepts this address, and the queue consumer would drop it anyway, so
+		// bounce it now instead of accepting mail that silently disappears.
+		if (!decision) {
+			return { action: "reject", rejectReason: "Address not found" };
+		}
+		if (decision.ruleId) {
 			await recordRuleMatch(db, decision.ruleId).catch(() => undefined);
 		}
 		return decision;

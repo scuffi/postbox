@@ -74,8 +74,9 @@ export async function POST(request: Request) {
 			domainId: domain.id,
 			localPart: username,
 			displayName: username,
+			useAllDomains: false,
 		});
-		await ensureMailboxDomainRouting(access.env, db, { id: mailboxId, domainId: domain.id, localPart: username, useAllDomains: true });
+		await ensureMailboxDomainRouting(access.env, db, { id: mailboxId, domainId: domain.id, localPart: username, useAllDomains: false });
 
 		return NextResponse.json({ account: accountListItemFromUser(account) }, { status: 201 });
 	} catch (error) {

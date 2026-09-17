@@ -5,7 +5,7 @@ import { mailboxes, users } from "@/db/schema";
 import { requireUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
 import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
-import { ensureMailboxDomainRouting, removeMailboxDomainRouting } from "@/lib/mailboxes/domain-addresses";
+import { ensureMailboxDomainRouting, removeMailboxAllDomainsRouting, removeMailboxDomainRouting } from "@/lib/mailboxes/domain-addresses";
 import { isPrimaryMailbox, tracksAccountIdentity } from "@/lib/profile/identity-utils";
 import { syncPersonalIdentity } from "@/lib/profile/sync";
 import { updateMailboxSchema } from "@/lib/validators";
@@ -87,6 +87,20 @@ export async function PATCH(request: Request, { params }: MailboxRouteParams) {
 				{ error: "Failed to configure inbound routing for all domains. Please try saving again." },
 				{ status: 502 },
 			);
+		}
+	}
+	if (parsed.data.useAllDomains === false && existing.useAllDomains) {
+		try {
+			await removeMailboxAllDomainsRouting(env, db, {
+				id: existing.id,
+				domainId: existing.domainId,
+				localPart: existing.localPart,
+				useAllDomains: false,
+			});
+		} catch (error) {
+			// Inbound resolution already honours the flag, so a leftover Cloudflare rule only
+			// delivers to the Worker, which bounces the address.
+			console.error("removeMailboxAllDomainsRouting", error);
 		}
 	}
 	if (Object.keys(updateValues).length > 0) {

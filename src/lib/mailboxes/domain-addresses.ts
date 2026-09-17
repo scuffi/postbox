@@ -99,6 +99,22 @@ export async function ensureMailboxDomainRouting(
 	);
 }
 
+/**
+ * Drops the Cloudflare address rules a mailbox only had because "Use all domains" was on,
+ * leaving its primary address and explicit aliases routed.
+ */
+export async function removeMailboxAllDomainsRouting(
+	env: CloudflareEnv,
+	db: AppDatabase,
+	mailbox: MailboxDomainAddressInput,
+): Promise<void> {
+	const allDomainAddresses = await getMailboxDomainAddresses(db, { ...mailbox, useAllDomains: true });
+	const keptAddresses = new Set(await getMailboxDomainAddresses(db, { ...mailbox, useAllDomains: false }));
+	const staleAddresses = allDomainAddresses.filter((address) => !keptAddresses.has(address));
+	if (staleAddresses.length === 0) return;
+	await removeRoutingForAddresses(env, db, mailbox, staleAddresses);
+}
+
 export async function removeMailboxDomainRouting(
 	env: CloudflareEnv,
 	db: AppDatabase,
@@ -106,6 +122,15 @@ export async function removeMailboxDomainRouting(
 ): Promise<void> {
 	const addresses = await getMailboxDomainAddresses(db, mailbox);
 	if (addresses.length === 0) return;
+	await removeRoutingForAddresses(env, db, mailbox, addresses);
+}
+
+async function removeRoutingForAddresses(
+	env: CloudflareEnv,
+	db: AppDatabase,
+	mailbox: MailboxDomainAddressInput,
+	addresses: string[],
+): Promise<void> {
 	const [primaryDomain] = await db
 		.select({ userId: domains.userId })
 		.from(domains)
