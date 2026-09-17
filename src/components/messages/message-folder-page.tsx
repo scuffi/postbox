@@ -78,8 +78,9 @@ function MessageListRow({
 		if (!read && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
 			const previousThreadUnread = threadUnread;
 			setRead(true);
-			if (previousThreadUnread !== undefined) setThreadUnread(Math.max(0, previousThreadUnread - 1));
-			if (message.direction === "inbound") dispatchMessageCountsDelta({ inboxUnreadDelta: -1 });
+			// Opening marks the whole conversation read, so the row clears entirely.
+			if (previousThreadUnread !== undefined) setThreadUnread(0);
+			if (message.direction === "inbound") dispatchMessageCountsDelta({ inboxUnreadDelta: -(previousThreadUnread || 1) });
 			void runBulkMessageAction([message.id], "read", false).catch(() => {
 				setRead(false);
 				setThreadUnread(previousThreadUnread);

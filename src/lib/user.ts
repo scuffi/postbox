@@ -1,4 +1,4 @@
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, notInArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { messages, domains, mailboxes } from "@/db/schema";
 import { getMailboxAccessLevel, listAccessibleMailboxIds } from "@/lib/mailboxes/access";
@@ -85,6 +85,20 @@ export async function markMessageAsReadForUser(env: CloudflareEnv, user: Session
 	if (!message?.mailboxId) return false;
 	const access = await getMailboxAccessLevel(db, user, message.mailboxId);
 	if (!access?.canRead) return false;
+	// Opening a message shows the whole conversation, so the whole conversation is read.
+	// Without this a thread row stays unread until every message in it is opened singly.
+	if (message.threadId) {
+		await db
+			.update(messages)
+			.set({ read: true })
+			.where(and(
+				eq(messages.threadId, message.threadId),
+				eq(messages.mailboxId, message.mailboxId),
+				eq(messages.direction, "inbound"),
+				eq(messages.read, false),
+				notInArray(messages.status, ["draft", "trash"]),
+			));
+	}
 	await db.update(messages).set({ read: true }).where(eq(messages.id, messageId));
 	await createAuditLog(env, {
 		actorUserId: user.id,

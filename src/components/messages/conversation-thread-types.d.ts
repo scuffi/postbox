@@ -1,16 +1,18 @@
+import type { ReactNode } from "react";
 import type { ThreadMessage } from "@/hooks/types";
 
 export type ConversationThreadProps = {
-	/** The message the reader is currently viewing; it is rendered by the page, not here. */
+	/** The message the reader opened; its full card is passed in as `current`. */
 	currentMessageId: string;
-	/** Which side of the current message to render. */
-	position: "before" | "after";
+	/** The open message's card, rendered in its place in the conversation. */
+	current: ReactNode;
 	messages: ThreadMessage[];
 	mailboxId: string | null;
 	currentAccountName?: string;
 	ownAddress?: string | null;
 	ownAddresses?: string[];
 	latestMessagesFirst: boolean;
+	onLatestMessagesFirstChange: (latestFirst: boolean) => void;
 	expandedAll: boolean;
 	onExpandedAllChange: (expanded: boolean) => void;
 };

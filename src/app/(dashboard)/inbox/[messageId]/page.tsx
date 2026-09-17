@@ -21,6 +21,7 @@ import { MessageDetailSkeleton } from "@/components/page-skeletons";
 import { usePageLoading } from "@/components/page-loading";
 import { PreviousMessage } from "@/components/previous-message";
 import { ConversationThread } from "@/components/messages/conversation-thread";
+import { formatThreadTime, formatThreadTimestampFull } from "@/components/messages/conversation-thread-utils";
 import { ThreadMessageActions } from "@/components/messages/thread-message-actions";
 import { SpamScoreDetails } from "@/components/messages/spam-score-details";
 import { SenderAlerts, SenderVerificationBadge } from "@/components/messages/sender-verification";
@@ -50,7 +51,7 @@ export default function MessageDetailPage() {
   const [previewAttachment, setPreviewAttachment] =
     useState<MessageAttachment | null>(null);
   const [threadExpanded, setThreadExpanded] = useState(false);
-  const [latestMessagesFirst] = useLatestMessagesFirst();
+  const [latestMessagesFirst, setLatestMessagesFirst] = useLatestMessagesFirst();
   const desktop = useMediaQuery(DESKTOP_QUERY, true);
   usePageLoading(loading);
   const thread = useMessageThread(messageId, data?.message?.threadId);
@@ -151,7 +152,6 @@ export default function MessageDetailPage() {
   );
   const mailboxDomain = messageMailbox?.hostname ?? "";
   const threadCount = thread.messages.length;
-  const sentAt = dayjs(message.createdAt);
   const actions = (
     <MessageActions
       messageId={message.id}
@@ -218,18 +218,17 @@ export default function MessageDetailPage() {
 
           <ConversationThread
             currentMessageId={message.id}
-            position={latestMessagesFirst ? "after" : "before"}
             messages={thread.messages}
             mailboxId={message.mailboxId}
             currentAccountName={currentAccountName}
             ownAddress={ownAddress}
             ownAddresses={ownAddresses}
             latestMessagesFirst={latestMessagesFirst}
+            onLatestMessagesFirstChange={setLatestMessagesFirst}
             expandedAll={threadExpanded}
             onExpandedAllChange={setThreadExpanded}
-          />
-
-          <article className="mt-6 animate-fade-up rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.03)] [animation-delay:60ms]">
+            current={
+          <article className="animate-fade-up rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.03)]">
             <div className="flex items-start justify-between gap-3 px-4 pb-4 pt-4 sm:gap-4 sm:px-6 sm:pt-5">
               <div className="flex min-w-0 items-start gap-3">
                 <ContactAvatar
@@ -287,9 +286,9 @@ export default function MessageDetailPage() {
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                <Tooltip label={sentAt.format("dddd, D MMMM YYYY [at] HH:mm")}>
+                <Tooltip label={formatThreadTimestampFull(message.createdAt)}>
                   <time dateTime={message.createdAt} className="hidden text-xs tabular-nums text-subtle-foreground sm:block">
-                    {sentAt.format("D MMM, HH:mm")}
+                    {formatThreadTime(message.createdAt)}
                   </time>
                 </Tooltip>
                 <ThreadMessageActions
@@ -386,18 +385,7 @@ export default function MessageDetailPage() {
               )}
             </div>
           </article>
-
-          <ConversationThread
-            currentMessageId={message.id}
-            position={latestMessagesFirst ? "before" : "after"}
-            messages={thread.messages}
-            mailboxId={message.mailboxId}
-            currentAccountName={currentAccountName}
-            ownAddress={ownAddress}
-            ownAddresses={ownAddresses}
-            latestMessagesFirst={latestMessagesFirst}
-            expandedAll={threadExpanded}
-            onExpandedAllChange={setThreadExpanded}
+            }
           />
         </div>
         <MessageAttachmentViewer
