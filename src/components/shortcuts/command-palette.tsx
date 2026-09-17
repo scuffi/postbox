@@ -31,9 +31,11 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
 		<DialogPrimitive.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<DialogPrimitive.Portal>
 				<DialogPrimitive.Overlay className="anim-overlay fixed inset-0 z-50 bg-stone-950/25 backdrop-blur-[2px] dark:bg-black/55" />
+				{/* Centred by the wrapper: a translate utility here would stack with the open animation's transform. */}
+				<div className="pointer-events-none fixed inset-x-0 top-[14vh] z-50 flex justify-center px-3">
 				<DialogPrimitive.Content
 					aria-describedby={undefined}
-					className="anim-pop fixed left-1/2 top-[14vh] z-50 w-[min(640px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-2xl bg-popover text-popover-foreground shadow-float outline-none"
+					className="anim-pop pointer-events-auto w-[min(640px,calc(100vw-24px))] overflow-hidden rounded-2xl bg-popover text-popover-foreground shadow-float outline-none"
 				>
 					<DialogPrimitive.Title className="sr-only">Command palette</DialogPrimitive.Title>
 					<Command
@@ -119,6 +121,7 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
 						</div>
 					</Command>
 				</DialogPrimitive.Content>
+				</div>
 			</DialogPrimitive.Portal>
 		</DialogPrimitive.Root>
 	);

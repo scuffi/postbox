@@ -18,9 +18,16 @@ export function DialogContent({
 	return (
 		<DialogPrimitive.Portal>
 			<DialogPrimitive.Overlay className="anim-overlay fixed inset-0 z-50 bg-stone-950/30 backdrop-blur-[3px] dark:bg-black/60" />
+			{/*
+				Centring happens here, not on the panel. Tailwind's -translate-x-1/2 sets the CSS
+				`translate` property, which stacks with the `transform` the open animation runs, so
+				a dialog centred that way flies in from off-screen and snaps into place at the end.
+				The wrapper passes clicks through to the overlay, which closes on outside clicks.
+			*/}
+			<div className="pointer-events-none fixed inset-0 z-50 grid place-items-center p-4">
 			<DialogPrimitive.Content
 				className={cn(
-					"anim-dialog fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-4rem)] w-[min(520px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-6 text-popover-foreground shadow-float outline-none",
+					"anim-dialog pointer-events-auto relative max-h-[calc(100dvh-4rem)] w-[min(520px,calc(100vw-32px))] overflow-y-auto overscroll-contain rounded-2xl bg-popover p-6 text-popover-foreground shadow-float outline-none",
 					className,
 				)}
 				{...props}
@@ -33,6 +40,7 @@ export function DialogContent({
 					</DialogPrimitive.Close>
 				)}
 			</DialogPrimitive.Content>
+			</div>
 		</DialogPrimitive.Portal>
 	);
 }

@@ -193,12 +193,12 @@
 @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes overlay-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes dialog-in {
-	from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(0.97); filter: blur(2px); }
-	to { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+	from { opacity: 0; transform: translateY(8px) scale(0.97); }
+	to { opacity: 1; transform: none; }
 }
 @keyframes dialog-out {
-	from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-	to { opacity: 0; transform: translate(-50%, calc(-50% + 6px)) scale(0.98); }
+	from { opacity: 1; transform: none; }
+	to { opacity: 0; transform: translateY(4px) scale(0.985); }
 }
 @keyframes drawer-in {
 	from { transform: translateX(-100%); }
@@ -214,13 +214,15 @@
 }
 
 @utility anim-overlay {
-	&[data-state="open"] { animation: overlay-in 0.2s var(--ease-out-expo); }
-	&[data-state="closed"] { animation: overlay-out 0.15s ease-in; }
+	&[data-state="open"] { animation: overlay-in 0.18s var(--ease-out-expo) both; }
+	&[data-state="closed"] { animation: overlay-out 0.14s ease-in both; }
 }
 
 @utility anim-dialog {
-	&[data-state="open"] { animation: dialog-in 0.32s var(--ease-out-expo); }
-	&[data-state="closed"] { animation: dialog-out 0.15s ease-in; }
+	transform-origin: center;
+	/* `both` holds the first frame until the animation starts, so nothing flashes unstyled. */
+	&[data-state="open"] { animation: dialog-in 0.26s var(--ease-out-expo) both; will-change: transform, opacity; }
+	&[data-state="closed"] { animation: dialog-out 0.14s ease-in both; }
 }
 
 @utility anim-pop {
