@@ -40,7 +40,7 @@ postbox needs one runtime value:
 
 - `CF_TOKEN` — a scoped Cloudflare API token, belonging to the same account as your domains, with:
   - **Zone (all zones you will connect):** Email Routing Rules — Edit.
-  - **Account:** Email Sending — Edit (only to send outbound mail).
+  - **Account:** Email Routing Addresses — Edit (required to enable Email Routing); Email Sending — Edit (only to send outbound mail).
 
 Set it as a Worker secret (it persists across deploys thanks to `keep_vars`):
 
