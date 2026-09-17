@@ -40,10 +40,10 @@ jobs:
               exit 1
             fi
           }
-          provision "D1 database 'mailflare'" d1 create mailflare
-          provision "R2 bucket 'mailflare-raw'" r2 bucket create mailflare-raw
-          provision "queue 'mailflare-inbound'" queues create mailflare-inbound
-          provision "queue 'mailflare-outbound'" queues create mailflare-outbound
+          provision "D1 database 'postbox'" d1 create postbox
+          provision "R2 bucket 'postbox-raw'" r2 bucket create postbox-raw
+          provision "queue 'postbox-inbound'" queues create postbox-inbound
+          provision "queue 'postbox-outbound'" queues create postbox-outbound
 
       - name: Build (OpenNext)
         run: npx opennextjs-cloudflare build

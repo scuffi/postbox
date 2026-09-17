@@ -59,7 +59,7 @@ Deploy from this repo — either let GitHub Actions deploy on every push to `mai
 
 See [docs/deployment.md](docs/deployment.md) for the full guide. The short version:
 
-1. **Provision + deploy** — add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as GitHub secrets; pushing to `main` provisions D1, R2 and Queues, applies migrations, and deploys the Worker. Keep the Worker name `mailflare` (internal plumbing depends on it).
+1. **Provision + deploy** — add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as GitHub secrets; pushing to `main` provisions D1, R2 and Queues, applies migrations, and deploys the Worker. Keep the Worker name `postbox` (internal plumbing depends on it).
 2. **Add `CF_TOKEN`** — a scoped API token the app uses at runtime to manage your domains (`wrangler secret put CF_TOKEN`, or Settings → Variables in the dashboard). Permissions are listed in the deployment guide.
 3. **Complete setup** — open the deployed URL, follow `/setup`, create the admin account.
 4. **Connect email domains** — Admin → Domains → add each domain (it must be on Cloudflare DNS). MX/Email Routing is configured automatically.

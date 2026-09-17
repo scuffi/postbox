@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "mailflare",
+	"name": "postbox",
 	"main": "./worker.ts",
 	"compatibility_date": "2026-05-20",
 	"keep_vars": true,
@@ -18,7 +18,7 @@
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",
-			"service": "mailflare",
+			"service": "postbox",
 		},
 	],
 	"durable_objects": {
@@ -63,35 +63,35 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "mailflare",
+			"database_name": "postbox",
 			"migrations_dir": "drizzle/migrations",
 		},
 	],
 	"r2_buckets": [
 		{
 			"binding": "BUCKET",
-			"bucket_name": "mailflare-raw",
+			"bucket_name": "postbox-raw",
 		},
 	],
 	"queues": {
 		"producers": [
 			{
 				"binding": "INBOUND_QUEUE",
-				"queue": "mailflare-inbound",
+				"queue": "postbox-inbound",
 			},
 			{
 				"binding": "OUTBOUND_QUEUE",
-				"queue": "mailflare-outbound",
+				"queue": "postbox-outbound",
 			},
 		],
 		"consumers": [
 			{
-				"queue": "mailflare-inbound",
+				"queue": "postbox-inbound",
 				"max_batch_size": 5,
 				"max_retries": 3,
 			},
 			{
-				"queue": "mailflare-outbound",
+				"queue": "postbox-outbound",
 				"max_batch_size": 5,
 				"max_retries": 3,
 			},

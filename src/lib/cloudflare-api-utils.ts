@@ -59,5 +59,5 @@ export function getCloudflareAuthHint(errors: CfApiError[]) {
 }
 
 export function getEmailWorkerName(): string {
-	return "mailflare";
+	return "postbox";
 }

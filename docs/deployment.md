@@ -11,7 +11,7 @@ postbox deploys from this repository — either automatically on every push to `
 3. **Complete setup** — open the deployed app and follow `/setup` to create the first admin account.
 4. **Connect your domains** — add each domain you receive mail for; routing is configured automatically.
 
-> The Worker name must remain `mailflare`. It is internal plumbing (email routing rules and the self-reference binding point at it by name) and does not affect the product name shown in the app.
+> The Worker name must remain `postbox`. It is internal plumbing (email routing rules and the self-reference binding point at it by name) and does not affect the product name shown in the app.
 
 ## Option A: Deploy on push (GitHub Actions)
 
@@ -22,14 +22,14 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 - `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with **Workers Scripts: Edit**, **D1: Edit**, **Workers R2 Storage: Edit** and **Queues: Edit**.
 - `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID (dashboard right sidebar).
 
-Then push to `main`. The first run creates the D1 database (`mailflare`), R2 bucket (`mailflare-raw`), and queues (`mailflare-inbound`, `mailflare-outbound`); later runs reuse them. Every run builds the app, applies pending D1 migrations, and deploys the Worker.
+Then push to `main`. The first run creates the D1 database (`postbox`), R2 bucket (`postbox-raw`), and queues (`postbox-inbound`, `postbox-outbound`); later runs reuse them. Every run builds the app, applies pending D1 migrations, and deploys the Worker.
 
 ## Option B: One-click deploy
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/scuffi/postbox)
 
 1. Click the button and sign in to the Cloudflare account that owns your domains.
-2. Keep the app name as `mailflare`.
+2. Keep the app name as `postbox`.
 3. Let Cloudflare finish provisioning and deploying.
 
 If you use the button, Cloudflare's own git integration may also deploy on push — pick one deploy path and disable the other so two pipelines don't race.
@@ -56,7 +56,7 @@ Optional Worker variables:
 
 ## Complete setup
 
-1. Open the deployed Worker URL (`mailflare.<account>.workers.dev`).
+1. Open the deployed Worker URL (`postbox.<account>.workers.dev`).
 2. Go to `/setup` if you are not redirected there.
 3. Create the first admin account.
 
@@ -71,7 +71,7 @@ Receiving works immediately. Sending requires the Workers paid plan.
 
 ## Custom domain for the app
 
-Workers & Pages → your `mailflare` Worker → **Settings → Domains & Routes → Add custom domain**. The domain must be on Cloudflare DNS. This is the address you browse the app at and is independent of the email domains managed inside it.
+Workers & Pages → your `postbox` Worker → **Settings → Domains & Routes → Add custom domain**. The domain must be on Cloudflare DNS. This is the address you browse the app at and is independent of the email domains managed inside it.
 
 ## Manual deploy
 
