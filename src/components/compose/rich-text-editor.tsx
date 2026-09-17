@@ -42,6 +42,7 @@ export function RichTextEditor({
 	className,
 	toolbarStart,
 	toolbarEnd,
+	toolbarHidden = false,
 }: RichTextEditorProps) {
 	const editorRef = useRef<HTMLDivElement | null>(null);
 	const [active, setActive] = useState<Record<string, boolean>>({});
@@ -144,7 +145,8 @@ export function RichTextEditor({
 					onPaste={onPaste}
 					onKeyDown={onKeyDown}
 					className={cn(
-						"email-body max-w-none px-4 py-4 text-foreground outline-none",
+						// Phones zoom into editable text under 16px, so the body steps up there.
+						"email-body max-w-none px-4 py-4 text-foreground outline-none max-sm:text-base",
 						"min-h-32 empty:before:pointer-events-none empty:before:text-subtle-foreground empty:before:content-[attr(data-placeholder)]",
 						disabled && "cursor-not-allowed opacity-60",
 					)}
@@ -169,7 +171,7 @@ export function RichTextEditor({
 					</div>
 				)}
 			</div>
-			<div className="relative flex items-center gap-0.5 overflow-x-auto border-t border-border bg-elevated/60 px-3 py-2.5 scrollbar-none">
+			<div className={cn("relative flex items-center gap-0.5 overflow-x-auto border-t border-border bg-elevated/60 px-3 py-2.5 scrollbar-none", toolbarHidden && "hidden")}>
 				{toolbarStart}
 				{COMMANDS.map((item) => (
 					<Tooltip key={item.command} label={item.label}>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarClock, Check, FileText, Forward, Maximize2, Minus, Paperclip, PenLine, Reply, SendHorizontal, Trash2, X } from "lucide-react";
+import { CalendarClock, Check, FileText, Forward, Loader2, Maximize2, Minus, Paperclip, PenLine, Reply, SendHorizontal, Trash2, Type, X } from "lucide-react";
 import { toast as showToast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
@@ -30,12 +30,18 @@ type Toast = { type: "success" | "error"; message: string } | null;
 
 export function ComposeForm({
 	mode = "page",
+	sheet = false,
 	draftIdToLoad,
 	onClose,
+	onHeaderPointerDown,
 }: {
 	mode?: "page" | "popup";
+	/** Phone layout: a full-screen sheet with a thumb-reach action bar that closes once sent. */
+	sheet?: boolean;
 	draftIdToLoad?: string | null;
 	onClose?: () => void;
+	/** Lets the sheet start a drag-to-dismiss from its header. */
+	onHeaderPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 }) {
 	const router = useRouter();
 	const { selectedMailbox, setSelectedMailbox, mailboxes } = useSelectedMailbox();
@@ -67,6 +73,7 @@ export function ComposeForm({
 	const attachmentInput = useRef<HTMLInputElement | null>(null);
 	const previousSignature = useRef("");
 	const [minimized, setMinimized] = useState(false);
+	const [formattingOpen, setFormattingOpen] = useState(false);
 
 	// Surface form feedback through the app-wide toaster.
 	useEffect(() => {
@@ -271,10 +278,20 @@ export function ComposeForm({
 			return;
 		}
 
+		// An autosave still in flight must not resurrect the draft of a sent message.
+		if (saveTimer.current) clearTimeout(saveTimer.current);
+		draftGeneration.current += 1;
 		if (draftId) {
 			void authFetch(`/api/drafts/${draftId}`, { method: "DELETE" }).finally(() => {
 				window.dispatchEvent(new Event("mailflare:messages-changed"));
 			});
+		}
+		if (sheet && onClose) {
+			// On a phone the sheet is the task; once it is done it gets out of the way.
+			showToast.success(data.scheduled ? "Message scheduled" : "Message sent");
+			window.dispatchEvent(new Event("mailflare:messages-changed"));
+			onClose();
+			return;
 		}
 		setDraftId(null);
 		setTo([]);
@@ -394,7 +411,11 @@ export function ComposeForm({
 				"flex flex-col overflow-hidden bg-popover shadow-float transition-[width,height,border-radius] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:rounded-2xl",
 				minimized
 					? "h-12 w-[min(340px,100vw)] rounded-t-2xl"
-					: "h-dvh w-full pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] max-sm:rounded-none sm:h-[min(600px,calc(100dvh-88px))] sm:w-[min(620px,calc(100vw-32px))] sm:rounded-2xl sm:p-0",
+					: cn(
+						"h-full w-full pt-[env(safe-area-inset-top)] max-sm:rounded-none sm:h-[min(600px,calc(100dvh-88px))] sm:w-[min(620px,calc(100vw-32px))] sm:rounded-2xl sm:p-0",
+						// The phone action bar pads for the home indicator itself.
+						!sheet && "pb-[env(safe-area-inset-bottom)]",
+					),
 			)
 			: "flex h-full min-h-[680px] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-panel";
 
@@ -412,10 +433,33 @@ export function ComposeForm({
 			}}
 			className={frameClass}
 		>
+			{sheet && (
+				<div
+					className="relative flex h-14 shrink-0 touch-none items-center gap-2 border-b border-border px-2"
+					onPointerDown={onHeaderPointerDown}
+				>
+					<span aria-hidden className="absolute left-1/2 top-1.5 h-1 w-9 -translate-x-1/2 rounded-full bg-border-strong" />
+					<button
+						type="button"
+						onClick={() => onClose?.()}
+						className="flex size-11 items-center justify-center rounded-full text-muted-foreground active:bg-accent"
+						aria-label="Close composer"
+					>
+						<X className="size-5" />
+					</button>
+					<span className="min-w-0 flex-1 truncate text-center text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+						{composerTitle}
+					</span>
+					<span className="flex w-11 justify-center text-subtle-foreground" aria-live="polite">
+						{draftId && !loadingDraft && <Check className="size-4" aria-label="Draft saved" />}
+					</span>
+				</div>
+			)}
 			<div
 				className={cn(
 					"flex h-12 shrink-0 items-center gap-2 border-b border-border pl-4 pr-2",
 					mode === "popup" && minimized && "cursor-pointer border-b-0",
+					sheet && "hidden",
 				)}
 				onClick={mode === "popup" && minimized ? () => setMinimized(false) : undefined}
 			>
@@ -471,7 +515,7 @@ export function ComposeForm({
 						onChange={(event) => selectSender(event.target.value)}
 						required
 						disabled={loadingDraft || senderOptions.length === 0}
-						className="h-8 border-0 bg-transparent pl-0 text-[13.5px] font-medium shadow-none hover:border-0 focus-visible:ring-0 dark:bg-transparent"
+						className="h-8 border-0 bg-transparent pl-0 text-[13.5px] font-medium shadow-none max-sm:text-base hover:border-0 focus-visible:ring-0 dark:bg-transparent"
 						containerClassName="flex-1"
 					>
 						{senderOptions.length === 0 && <option value="">Select a mailbox first</option>}
@@ -534,7 +578,7 @@ export function ComposeForm({
 						placeholder="Subject"
 						required
 						disabled={loadingDraft}
-						className="h-12 w-full bg-transparent text-[15px] font-semibold tracking-[-0.01em] text-foreground outline-none placeholder:font-medium placeholder:text-subtle-foreground disabled:opacity-50"
+						className="h-12 w-full bg-transparent text-[15px] font-semibold max-sm:text-base tracking-[-0.01em] text-foreground outline-none placeholder:font-medium placeholder:text-subtle-foreground disabled:opacity-50"
 					/>
 				</div>
 				<Label htmlFor={`${mode}-text`} className="sr-only">Body</Label>
@@ -545,7 +589,8 @@ export function ComposeForm({
 					quotedHtml={quotedHtml}
 					disabled={loadingDraft}
 					placeholder="Write your message…"
-					toolbarStart={
+					toolbarHidden={sheet && !formattingOpen}
+					toolbarStart={sheet ? undefined : (
 						<div className="mr-2 flex items-center rounded-xl shadow-button">
 							<Tooltip label={scheduledAt ? "Schedule send" : "Send"} shortcut="⌘↵">
 								<button
@@ -563,16 +608,9 @@ export function ComposeForm({
 								onChange={setScheduledAt}
 							/>
 						</div>
-					}
-					toolbarEnd={
+					)}
+					toolbarEnd={sheet ? undefined : (
 						<>
-							<input
-								ref={attachmentInput}
-								type="file"
-								multiple
-								className="hidden"
-								onChange={(event) => addAttachments(event.target.files)}
-							/>
 							<Tooltip label="Attach files">
 								<button
 									type="button"
@@ -597,7 +635,7 @@ export function ComposeForm({
 								</button>
 							</Tooltip>
 						</>
-					}
+					)}
 				/>
 				{(attachments.length > 0 || storedAttachments.length > 0) && (
 					<div className="flex max-h-28 flex-wrap gap-2 overflow-y-auto border-t border-border px-4 py-3">
@@ -643,6 +681,72 @@ export function ComposeForm({
 						))}
 					</div>
 				)}
+				{sheet && (
+					<div className="flex shrink-0 items-center gap-1 border-t border-border px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+0.375rem)] group-data-[keyboard=open]/sheet:pb-1.5">
+						<button
+							type="button"
+							aria-label="Formatting"
+							aria-pressed={formattingOpen}
+							// Keep the keyboard up while toggling the formatting row.
+							onMouseDown={(event) => event.preventDefault()}
+							onClick={() => setFormattingOpen((value) => !value)}
+							disabled={loadingDraft}
+							className={cn(
+								"flex size-11 items-center justify-center rounded-full transition-colors active:bg-accent disabled:opacity-50",
+								formattingOpen ? "bg-accent text-foreground" : "text-muted-foreground",
+							)}
+						>
+							<Type className="size-5" />
+						</button>
+						<button
+							type="button"
+							aria-label="Attach files"
+							onClick={() => attachmentInput.current?.click()}
+							disabled={loading || loadingDraft}
+							className="flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors active:bg-accent disabled:opacity-50"
+						>
+							<Paperclip className="size-5" />
+						</button>
+						<button
+							type="button"
+							aria-label="Discard draft"
+							onClick={() => void deleteDraftAndClose()}
+							disabled={loading || loadingDraft || deletingDraft}
+							className="flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors active:bg-destructive/10 active:text-destructive disabled:opacity-50"
+						>
+							<Trash2 className="size-5" />
+						</button>
+						<span className="flex-1" />
+						<ScheduleSendMenu
+							variant="icon"
+							disabled={loading || loadingDraft || !fromAddr}
+							value={scheduledAt}
+							onChange={setScheduledAt}
+						/>
+						<button
+							type="submit"
+							disabled={loading || loadingDraft || !fromAddr}
+							aria-label={scheduledAt ? "Schedule send" : "Send"}
+							className="ml-1 flex h-11 items-center gap-2 rounded-full bg-gradient-to-b from-[color-mix(in_oklab,var(--primary)_90%,white)] to-primary pl-4 pr-5 text-[15px] font-semibold text-primary-foreground shadow-button transition-[filter,transform] active:scale-95 active:brightness-95 disabled:pointer-events-none disabled:opacity-50"
+						>
+							{loading ? (
+								<Loader2 className="size-[18px] animate-spin" />
+							) : scheduledAt ? (
+								<CalendarClock className="size-[18px]" />
+							) : (
+								<SendHorizontal className="size-[18px]" />
+							)}
+							{scheduledAt ? "Schedule" : "Send"}
+						</button>
+					</div>
+				)}
+				<input
+					ref={attachmentInput}
+					type="file"
+					multiple
+					className="hidden"
+					onChange={(event) => addAttachments(event.target.files)}
+				/>
 			</div>
 		</form>
 	);

@@ -9,10 +9,11 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { formatDateTimeLocal, getScheduleSendOptions, parseDateTimeLocal } from "./schedule-send-utils";
 import type { ScheduleSendMenuProps } from "./schedule-send-types";
 
-export function ScheduleSendMenu({ disabled, value, onChange }: ScheduleSendMenuProps) {
+export function ScheduleSendMenu({ disabled, value, onChange, variant = "split" }: ScheduleSendMenuProps) {
 	const options = getScheduleSendOptions();
 	const minimum = new Date(Date.now() + 5 * 60 * 1000);
 
@@ -22,11 +23,16 @@ export function ScheduleSendMenu({ disabled, value, onChange }: ScheduleSendMenu
 				type="button"
 				disabled={disabled}
 				aria-label="Schedule send options"
-				className="inline-flex h-8 items-center justify-center rounded-r-xl border-l border-black/15 bg-gradient-to-b from-[color-mix(in_oklab,var(--primary)_90%,white)] to-primary px-2 text-primary-foreground transition-[filter] hover:brightness-[1.06] focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=open]:brightness-95"
+				className={cn(
+					variant === "split"
+						? "inline-flex h-8 items-center justify-center rounded-r-xl border-l border-black/15 bg-gradient-to-b from-[color-mix(in_oklab,var(--primary)_90%,white)] to-primary px-2 text-primary-foreground transition-[filter] hover:brightness-[1.06] focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=open]:brightness-95"
+						: "flex size-11 items-center justify-center rounded-full transition-colors focus-visible:outline-none active:bg-accent disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-accent",
+					variant === "icon" && (value ? "bg-primary-soft text-primary-soft-foreground" : "text-muted-foreground"),
+				)}
 			>
-				<ChevronDown className="size-3.5" />
+				{variant === "split" ? <ChevronDown className="size-3.5" /> : <CalendarClock className="size-5" />}
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="start" side="top" className="w-64">
+			<DropdownMenuContent align={variant === "split" ? "start" : "end"} side="top" className="w-64">
 				<DropdownMenuLabel>Schedule send</DropdownMenuLabel>
 				{value && (
 					<>

@@ -109,7 +109,7 @@ export function RecipientInput({
 					disabled={disabled}
 					// Native `required` would block submit while chips exist; the form checks itself.
 					aria-required={required}
-					className="h-7 min-w-32 flex-1 border-0 bg-transparent p-0 text-[13.5px] text-foreground outline-none placeholder:text-subtle-foreground disabled:cursor-not-allowed"
+					className="h-7 min-w-32 flex-1 border-0 bg-transparent p-0 text-[13.5px] text-foreground max-sm:text-base outline-none placeholder:text-subtle-foreground disabled:cursor-not-allowed"
 				/>
 			</div>
 			{trailing && (

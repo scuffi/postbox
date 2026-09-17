@@ -10,6 +10,8 @@ export type RichTextEditorProps = {
 	className?: string;
 	toolbarStart?: React.ReactNode;
 	toolbarEnd?: React.ReactNode;
+	/** Hides the formatting row; the phone composer toggles it from its action bar. */
+	toolbarHidden?: boolean;
 };
 
 export type ToolbarCommand = {
