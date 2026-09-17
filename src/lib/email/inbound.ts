@@ -10,7 +10,8 @@ import { getEmailAddress } from "@/lib/email/address";
 import { sendMailboxAutoReply } from "@/lib/email/auto-reply";
 import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
 import { listMessageAttachments, storeMessageAttachments } from "@/lib/email/attachments";
-import { getUnsubscribeUrlFromRawR2Key } from "@/lib/email/unsubscribe";
+import { getUnsubscribeUrlFromHeaders, getUnsubscribeUrlFromRawR2Key, readRawHeaders } from "@/lib/email/unsubscribe";
+import { getSenderVerification } from "@/lib/email/sender-verification";
 import { resolveThreadId } from "@/lib/email/threading";
 import type { SessionUser } from "@/lib/auth/types";
 import { analyzeSpam } from "@/lib/spam/engine";
@@ -248,9 +249,13 @@ export async function getMessageWithBodyForUser(env: CloudflareEnv, user: Sessio
 	const access = await getMailboxAccessLevel(db, user, message.mailboxId);
 	if (!access?.canRead) return null;
 	const contactNames = await getMessageContactNames(env, message.userId, message.fromAddr, message.toAddr);
-	const attachments = await listMessageAttachments(env, messageId);
-	const unsubscribeUrl = await getUnsubscribeUrlFromRawR2Key(env, message.rawR2Key);
-	return { message: { ...message, ...contactNames }, body: message, attachments, unsubscribeUrl };
+	const [attachments, rawHeaders] = await Promise.all([
+		listMessageAttachments(env, messageId),
+		readRawHeaders(env, message.rawR2Key),
+	]);
+	const unsubscribeUrl = rawHeaders ? getUnsubscribeUrlFromHeaders(rawHeaders) : null;
+	const senderVerification = await getSenderVerification(db, message, rawHeaders);
+	return { message: { ...message, ...contactNames }, body: message, attachments, unsubscribeUrl, senderVerification };
 }
 
 export async function getMessageMetadataForUser(env: CloudflareEnv, user: SessionUser, messageId: string) {

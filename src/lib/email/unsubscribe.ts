@@ -10,7 +10,8 @@ function getHeaderBlock(raw: ArrayBuffer): string {
 	return headerEnd === -1 ? text : text.slice(0, headerEnd);
 }
 
-function parseHeaders(headerBlock: string): Map<string, string[]> {
+/** Header values by lowercase name, in message order (the topmost header first). */
+export function parseHeaders(headerBlock: string): Map<string, string[]> {
 	const headers = new Map<string, string[]>();
 	let currentName: string | null = null;
 
@@ -54,7 +55,10 @@ function getCandidates(value: string): string[] {
 }
 
 export function extractUnsubscribeUrlFromRaw(raw: ArrayBuffer): UnsubscribeUrl {
-	const headers = parseHeaders(getHeaderBlock(raw));
+	return getUnsubscribeUrlFromHeaders(parseHeaders(getHeaderBlock(raw)));
+}
+
+export function getUnsubscribeUrlFromHeaders(headers: Map<string, string[]>): UnsubscribeUrl {
 	const values = headers.get("list-unsubscribe") ?? [];
 	const candidates = values.flatMap(getCandidates).filter(isAllowedUnsubscribeUrl);
 	return candidates.find((candidate) => candidate.startsWith("https://") || candidate.startsWith("http://"))
@@ -62,9 +66,15 @@ export function extractUnsubscribeUrlFromRaw(raw: ArrayBuffer): UnsubscribeUrl {
 		?? null;
 }
 
-export async function getUnsubscribeUrlFromRawR2Key(env: CloudflareEnv, rawR2Key: string | null): Promise<UnsubscribeUrl> {
+/** Reads just the header block of a stored raw message. */
+export async function readRawHeaders(env: CloudflareEnv, rawR2Key: string | null): Promise<Map<string, string[]> | null> {
 	if (!rawR2Key) return null;
 	const raw = await env.BUCKET.get(rawR2Key, { range: { offset: 0, length: maxHeaderBytes } });
 	if (!raw) return null;
-	return extractUnsubscribeUrlFromRaw(await raw.arrayBuffer());
+	return parseHeaders(getHeaderBlock(await raw.arrayBuffer()));
+}
+
+export async function getUnsubscribeUrlFromRawR2Key(env: CloudflareEnv, rawR2Key: string | null): Promise<UnsubscribeUrl> {
+	const headers = await readRawHeaders(env, rawR2Key);
+	return headers ? getUnsubscribeUrlFromHeaders(headers) : null;
 }

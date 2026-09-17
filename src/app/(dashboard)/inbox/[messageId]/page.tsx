@@ -23,6 +23,7 @@ import { PreviousMessage } from "@/components/previous-message";
 import { ConversationThread } from "@/components/messages/conversation-thread";
 import { ThreadMessageActions } from "@/components/messages/thread-message-actions";
 import { SpamScoreDetails } from "@/components/messages/spam-score-details";
+import { SenderAlerts, SenderVerificationBadge } from "@/components/messages/sender-verification";
 import { useMessageThread } from "@/components/messages/use-message-thread";
 import { useLatestMessagesFirst } from "@/components/messages/use-latest-messages-first";
 import { getMessageBackHref } from "@/components/message-actions/utils";
@@ -254,6 +255,7 @@ export default function MessageDetailPage() {
                         fromName
                       )}
                     </span>
+                    <SenderVerificationBadge verification={data.senderVerification} className="self-center" />
                     <span className="truncate text-[13px] text-muted-foreground">{fromAddress}</span>
                   </p>
                   <div className="mt-0.5 space-y-0.5 text-[12.5px] text-muted-foreground">
@@ -300,6 +302,7 @@ export default function MessageDetailPage() {
             </div>
 
             <div className="px-4 pb-6 sm:px-6">
+              <SenderAlerts verification={data.senderVerification} className="mb-4" />
               {htmlBody ? (
                 <div className="email-paper">
                   <div className="email-body text-foreground" dangerouslySetInnerHTML={{ __html: htmlBody }} />

@@ -1,5 +1,6 @@
 import type { Message } from "@/hooks/types";
 import type { ReplyContentParts } from "@/lib/email/reply-content-types";
+import type { SenderVerification } from "@/lib/email/sender-verification-types";
 
 export type MessageDetailResponse = {
 	message?: Message;
@@ -9,6 +10,8 @@ export type MessageDetailResponse = {
 	} | null;
 	attachments?: MessageAttachment[];
 	unsubscribeUrl?: string | null;
+	/** Inbound only: whether the From domain vouched for the message, plus impersonation warnings. */
+	senderVerification?: SenderVerification | null;
 	error?: string;
 };
 
