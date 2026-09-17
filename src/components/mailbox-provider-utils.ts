@@ -26,6 +26,19 @@ export function clearMailboxesCache() {
 	mailboxesRequestSessionToken = null;
 }
 
+/** Fired when mailboxes, their aliases or settings change, so the provider reloads them. */
+export const MAILBOXES_CHANGED_EVENT = "mailflare:mailboxes-changed";
+
+/**
+ * Drops the cached list and tells the mounted provider to refetch. Clearing the cache
+ * alone leaves the provider's state stale until a full reload — which is how a newly
+ * added alias went unrecognised and replies fell back to the primary address.
+ */
+export function notifyMailboxesChanged() {
+	clearMailboxesCache();
+	if (typeof window !== "undefined") window.dispatchEvent(new Event(MAILBOXES_CHANGED_EVENT));
+}
+
 export function clearMailboxClientState() {
 	clearMailboxesCache();
 	if (typeof window !== "undefined") {

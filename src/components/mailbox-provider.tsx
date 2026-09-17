@@ -13,6 +13,7 @@ import {
 	clearMailboxesCache,
 	fetchMailboxOptions,
 	isIdentityMailbox,
+	MAILBOXES_CHANGED_EVENT,
 	SELECTED_MAILBOX_STORAGE_KEY,
 } from "./mailbox-provider-utils";
 import {
@@ -94,6 +95,29 @@ export function MailboxProvider({ children }: { children: ReactNode }) {
 
 		return () => {
 			cancelled = true;
+		};
+	}, []);
+
+	useEffect(() => {
+		let cancelled = false;
+		function reloadMailboxes() {
+			const sessionToken = getClientSessionToken();
+			fetchMailboxOptions(true)
+				.then((items) => {
+					if (cancelled || sessionToken !== getClientSessionToken()) return;
+					setMailboxes(items);
+					// Keep the current selection (or the unified view) but swap in the fresh object.
+					setSelectedMailboxState((current) => (
+						current ? items.find((mailbox) => mailbox.id === current.id) ?? null : null
+					));
+				})
+				.catch(() => {});
+		}
+
+		window.addEventListener(MAILBOXES_CHANGED_EVENT, reloadMailboxes);
+		return () => {
+			cancelled = true;
+			window.removeEventListener(MAILBOXES_CHANGED_EVENT, reloadMailboxes);
 		};
 	}, []);
 

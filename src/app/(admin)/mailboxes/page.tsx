@@ -25,7 +25,7 @@ import { domainColor } from "@/lib/domain-color";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { clearMailboxesCache } from "@/components/mailbox-provider-utils";
+import { notifyMailboxesChanged } from "@/components/mailbox-provider-utils";
 import { authFetch } from "@/lib/auth/client";
 import type { CurrentAccountResponse, Domain, MailboxOwner, MailboxesResponse } from "./types";
 import { getMailboxAddress, getMailboxName } from "./utils";
@@ -102,7 +102,7 @@ export default function MailboxesPage() {
 			return json.id;
 		},
 		onSuccess: (mailboxId) => {
-			clearMailboxesCache();
+			notifyMailboxesChanged();
 			setCreateOpen(false);
 			qc.invalidateQueries({ queryKey: ["mailboxes"] });
 			if (mailboxType === "shared" && mailboxId) router.push(`/mailboxes/${mailboxId}`);

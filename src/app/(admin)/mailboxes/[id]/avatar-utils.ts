@@ -1,5 +1,5 @@
 import { authFetch } from "@/lib/auth/client";
-import { clearMailboxesCache } from "@/components/mailbox-provider-utils";
+import { notifyMailboxesChanged } from "@/components/mailbox-provider-utils";
 import {
 	PROFILE_AVATAR_ACCEPT,
 	validateProfileAvatar,
@@ -24,7 +24,7 @@ export async function uploadMailboxAvatar(mailboxId: string, file: File): Promis
 		body,
 	});
 	if (response.ok) {
-		clearMailboxesCache();
+		notifyMailboxesChanged();
 		return;
 	}
 

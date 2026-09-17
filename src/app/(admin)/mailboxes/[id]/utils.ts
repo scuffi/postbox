@@ -1,5 +1,5 @@
 import { authFetch } from "@/lib/auth/client";
-import { clearMailboxesCache } from "@/components/mailbox-provider-utils";
+import { notifyMailboxesChanged } from "@/components/mailbox-provider-utils";
 import type { MailboxAliasesResponse, MailboxDetail, MailboxDetailResponse, SharedInboxAccessResponse } from "./types";
 
 export function getMailboxAddress(mailbox: Pick<MailboxDetail, "localPart" | "hostname">): string {
@@ -32,7 +32,7 @@ export async function updateMailboxSettings(
 		throw new Error(json.error ?? "Failed to update mailbox");
 	}
 
-	clearMailboxesCache();
+	notifyMailboxesChanged();
 	return json.mailbox;
 }
 
@@ -80,7 +80,7 @@ export async function createMailboxAlias(
 	const json = (await res.json()) as { error?: string };
 	if (!res.ok) throw new Error(json.error ?? "Failed to add alias");
 
-	clearMailboxesCache();
+	notifyMailboxesChanged();
 }
 
 export async function deleteMailboxAlias(id: string, aliasId: string): Promise<void> {
@@ -90,7 +90,7 @@ export async function deleteMailboxAlias(id: string, aliasId: string): Promise<v
 	const json = (await res.json()) as { error?: string };
 	if (!res.ok) throw new Error(json.error ?? "Failed to remove alias");
 
-	clearMailboxesCache();
+	notifyMailboxesChanged();
 }
 
 export async function deleteMailbox(id: string): Promise<void> {
@@ -98,5 +98,5 @@ export async function deleteMailbox(id: string): Promise<void> {
 	const json = (await res.json()) as { error?: string };
 	if (!res.ok) throw new Error(json.error ?? "Failed to delete mailbox");
 
-	clearMailboxesCache();
+	notifyMailboxesChanged();
 }
