@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
-import { Archive, ChevronLeft, ChevronRight, Clock, FolderOpen, Inbox, ListFilter, Mail, MailOpen, PenLine, SearchX, Send, ShieldCheck, Star, Trash2 } from "lucide-react";
+import { Archive, ChevronLeft, ChevronRight, Clock, FolderOpen, Inbox, ListFilter, Mail, MailOpen, PenLine, RotateCw, SearchX, Send, ShieldCheck, Star, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ContactAvatar } from "@/components/contacts/contact-avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { Segmented } from "@/components/ui/segmented";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -332,7 +333,7 @@ export function MessageFolderPage({
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [conversationView] = useConversationView();
 	const grouped = conversationView && config.folder !== "drafts";
-	const { messages, isLoading, total, limit, updateMessages } = useMessages(config.folder, selectedMailbox?.id, {
+	const { messages, isLoading, isRefreshing, refresh, total, limit, updateMessages } = useMessages(config.folder, selectedMailbox?.id, {
 		query,
 		limit: pageSize,
 		offset,
@@ -509,6 +510,19 @@ export function MessageFolderPage({
 							</Button>
 						</Tooltip>
 					)}
+					{/* Touch screens pull the list down to refresh instead. */}
+					<Tooltip label="Refresh" className="pointer-coarse:hidden">
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon-xs"
+							disabled={isLoading || isRefreshing}
+							onClick={() => void refresh()}
+							aria-label="Refresh messages"
+						>
+							<RotateCw className={clsx(isRefreshing && "animate-spin")} />
+						</Button>
+					</Tooltip>
 					<span className={clsx("whitespace-nowrap text-xs tabular-nums text-subtle-foreground", compact && "hidden xl:inline")}>
 						{pageRange.start}–{pageRange.end} of {pageRange.total}
 					</span>
@@ -542,7 +556,11 @@ export function MessageFolderPage({
 				</div>
 			</div>
 
-			<div className={clsx("min-h-0 flex-1 overflow-y-auto overscroll-contain py-2 scrollbar-gutter-stable", showFloatingBar && "pb-24")}>
+			<PullToRefresh
+				onRefresh={refresh}
+				disabled={isLoading}
+				className={clsx("min-h-0 flex-1 overflow-y-auto overscroll-contain py-2 scrollbar-gutter-stable", showFloatingBar && "pb-24")}
+			>
 				<AnimatePresence initial={false}>
 					{messages.map((message, index) => (
 						<motion.div
@@ -578,7 +596,7 @@ export function MessageFolderPage({
 						<EmptyState icon={emptyState.icon} title={emptyState.title} description={emptyState.description} className={compact ? "py-12" : "py-24"} />
 					)
 				)}
-			</div>
+			</PullToRefresh>
 
 			<AnimatePresence>
 				{showFloatingBar && (
