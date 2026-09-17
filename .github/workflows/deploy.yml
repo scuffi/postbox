@@ -32,7 +32,7 @@ jobs:
             name="$1"; shift
             if out=$(npx wrangler "$@" 2>&1); then
               echo "Created $name."
-            elif echo "$out" | grep -qiE "already (exists|registered|used)|code 1000[0-9]"; then
+            elif echo "$out" | grep -qiE "already (exists|registered|used|taken)|code 1000[0-9]|code: 11009"; then
               echo "$name already exists — reusing."
             else
               echo "::error::Failed to provision $name"
