@@ -614,6 +614,38 @@ export const backups = sqliteTable(
 	],
 );
 
+/** Web Push endpoints, one per device and browser a user turned notifications on for. */
+export const pushSubscriptions = sqliteTable(
+	"push_subscriptions",
+	{
+		id: text("id").primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		endpoint: text("endpoint").notNull().unique(),
+		p256dh: text("p256dh").notNull(),
+		auth: text("auth").notNull(),
+		/** The app origin the device subscribed from; the VAPID `sub` claim needs a real URL. */
+		origin: text("origin").notNull(),
+		userAgent: text("user_agent"),
+		createdAt: integer("created_at", { mode: "timestamp" })
+			.notNull()
+			.$defaultFn(() => new Date()),
+		lastSuccessAt: integer("last_success_at", { mode: "timestamp" }),
+	},
+	(t) => [index("push_subscriptions_user_idx").on(t.userId)],
+);
+
+/** The instance's VAPID key pair, generated on first use. The private key is a JWK. */
+export const pushSettings = sqliteTable("push_settings", {
+	id: text("id").primaryKey(),
+	publicKey: text("public_key").notNull(),
+	privateKeyJwk: text("private_key_jwk").notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.notNull()
+		.$defaultFn(() => new Date()),
+});
+
 export const schema = {
 	users,
 	domains,
@@ -641,4 +673,6 @@ export const schema = {
 	backups,
 	appSettings,
 	licenseSettings,
+	pushSubscriptions,
+	pushSettings,
 };

@@ -31,6 +31,7 @@ const MIGRATION_NAMES = [
 	"0029_add_spam_protection.sql",
 	"0030_add_message_search_index.sql",
 	"0031_add_password_reset_and_mfa.sql",
+	"0033_add_push_notifications.sql",
 ];
 
 const INITIAL_SCHEMA_SQL = `
@@ -108,6 +109,9 @@ INSERT OR IGNORE INTO backup_settings (id, enabled, schedule_type, retention_ena
 CREATE TABLE IF NOT EXISTS backups (id text PRIMARY KEY NOT NULL, status text DEFAULT 'queued' NOT NULL, trigger text NOT NULL, r2_key text, filename text, size integer, error text, created_by_user_id text REFERENCES users(id) ON DELETE set null, created_at integer NOT NULL, started_at integer, completed_at integer);
 CREATE INDEX IF NOT EXISTS backups_created_idx ON backups(created_at);
 CREATE INDEX IF NOT EXISTS backups_status_idx ON backups(status);
+CREATE TABLE IF NOT EXISTS push_subscriptions (id text PRIMARY KEY NOT NULL, user_id text NOT NULL REFERENCES users(id) ON DELETE cascade, endpoint text NOT NULL UNIQUE, p256dh text NOT NULL, auth text NOT NULL, origin text NOT NULL, user_agent text, created_at integer NOT NULL, last_success_at integer);
+CREATE INDEX IF NOT EXISTS push_subscriptions_user_idx ON push_subscriptions(user_id);
+CREATE TABLE IF NOT EXISTS push_settings (id text PRIMARY KEY NOT NULL, public_key text NOT NULL, private_key_jwk text NOT NULL, created_at integer NOT NULL);
 CREATE TABLE IF NOT EXISTS app_settings (id text PRIMARY KEY NOT NULL, app_name text DEFAULT 'postbox' NOT NULL, icon_key text, updated_at integer NOT NULL);
 INSERT OR IGNORE INTO app_settings (id, app_name, updated_at) VALUES ('default', 'postbox', unixepoch());
 CREATE TABLE IF NOT EXISTS license_settings (id text PRIMARY KEY NOT NULL, instance_id text NOT NULL, instance_url text, license_key_hash text, plan text DEFAULT 'community' NOT NULL, state text DEFAULT 'inactive' NOT NULL, features text DEFAULT '[]' NOT NULL, activated_at integer, validated_at integer, updated_at integer NOT NULL);

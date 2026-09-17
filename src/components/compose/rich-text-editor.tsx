@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
 import {
 	Bold,
+	CodeXml,
 	Italic,
 	Link2,
 	List,
@@ -49,6 +50,8 @@ export function RichTextEditor({
 	const [linkOpen, setLinkOpen] = useState(false);
 	const [linkUrl, setLinkUrl] = useState("");
 	const [showQuoted, setShowQuoted] = useState(false);
+	// Raw HTML view for pasting a designed block or fixing markup the toolbar can't reach.
+	const [sourceMode, setSourceMode] = useState(false);
 	const savedRange = useRef<Range | null>(null);
 
 	// Keep the DOM in step with the value without resetting the caret on every keystroke.
@@ -147,10 +150,21 @@ export function RichTextEditor({
 					className={cn(
 						// Phones zoom into editable text under 16px, so the body steps up there.
 						"email-body max-w-none px-4 py-4 text-foreground outline-none max-sm:text-base",
+						sourceMode && "hidden",
 						"min-h-32 empty:before:pointer-events-none empty:before:text-subtle-foreground empty:before:content-[attr(data-placeholder)]",
 						disabled && "cursor-not-allowed opacity-60",
 					)}
 				/>
+				{sourceMode && (
+					<textarea
+						aria-label="Message HTML"
+						value={value}
+						onChange={(event) => onChange(event.target.value)}
+						disabled={disabled}
+						spellCheck={false}
+						className="block h-full min-h-48 w-full resize-none bg-transparent px-4 py-4 font-mono text-[12.5px] leading-5 text-foreground outline-none max-sm:text-base"
+					/>
+				)}
 				{quotedHtml && (
 					<div className="px-4 pb-3">
 						<button
@@ -179,7 +193,7 @@ export function RichTextEditor({
 							type="button"
 							aria-label={item.label}
 							aria-pressed={!!active[item.command]}
-							disabled={disabled}
+							disabled={disabled || sourceMode}
 							onMouseDown={(event) => event.preventDefault()}
 							onClick={() => run(item.command, item.value)}
 							className={cn(
@@ -201,6 +215,22 @@ export function RichTextEditor({
 						className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 					>
 						<Link2 className="size-4" />
+					</button>
+				</Tooltip>
+				<Tooltip label={sourceMode ? "Back to formatted view" : "Edit HTML"}>
+					<button
+						type="button"
+						aria-label="Edit HTML"
+						aria-pressed={sourceMode}
+						disabled={disabled}
+						onMouseDown={(event) => event.preventDefault()}
+						onClick={() => setSourceMode((open) => !open)}
+						className={cn(
+							"flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+							sourceMode && "bg-accent text-foreground ring-1 ring-inset ring-border",
+						)}
+					>
+						<CodeXml className="size-4" />
 					</button>
 				</Tooltip>
 				<Tooltip label="Clear formatting">

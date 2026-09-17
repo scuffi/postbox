@@ -20,6 +20,7 @@ import {
 	hasMeaningfulHtml,
 	htmlToPlainText,
 	joinQuotedHtml,
+	signatureToHtml,
 	splitQuotedHtml,
 	textToHtml,
 } from "./rich-text-utils";
@@ -195,7 +196,8 @@ export function ComposeForm({
 
 	useEffect(() => {
 		const bodyContent = htmlToPlainText(html).trim();
-		const signatureOnly = bodyContent === (effectiveMailbox?.signature?.trim() ?? "");
+		// Compare as text so an HTML signature on its own still counts as an empty message.
+		const signatureOnly = bodyContent === htmlToPlainText(signatureToHtml(effectiveMailbox?.signature)).trim();
 		const hasContent =
 			to.length > 0 || cc.length > 0 || bcc.length > 0 || subject.trim() || quotedHtml || (bodyContent && !signatureOnly);
 		if (!fromAddr || !hasContent || loadingDraft) return;

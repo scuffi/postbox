@@ -6,7 +6,7 @@ import { buildSnippet, parseRawMime } from "@/lib/email/parse";
 import { resolveInboundAddress, resolveInboxRuleDestination } from "@/lib/email/routing";
 import { dispatchWebhooks } from "@/lib/email/webhooks";
 import { getMessageContactNames, upsertContactFromAddress } from "@/lib/contacts/service";
-import { getEmailAddress } from "@/lib/email/address";
+import { getEmailAddress, getEmailDisplayName } from "@/lib/email/address";
 import { sendMailboxAutoReply } from "@/lib/email/auto-reply";
 import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
 import { listMessageAttachments, storeMessageAttachments } from "@/lib/email/attachments";
@@ -17,6 +17,8 @@ import type { SessionUser } from "@/lib/auth/types";
 import { analyzeSpam } from "@/lib/spam/engine";
 import { getReputationKeys } from "@/lib/spam/analyzers/reputation";
 import { recordReputationObservation } from "@/lib/spam/repository";
+import { sendPushToUsers } from "@/lib/push/service";
+import { truncateNotificationText } from "@/lib/push/push-utils";
 import {
 	getMailboxNotificationUserIds,
 	notifyUsersOfNewMessage,
@@ -200,6 +202,15 @@ export async function processInboundMessage(
 			fromName: contact?.displayName ?? null,
 			subject: parsed.subject,
 		});
+		// Filed-away mail (a rule moved it to trash or a folder) is not worth waking a phone for.
+		if (status === "received" && !folderId) {
+			await sendPushToUsers(env, notificationUserIds, {
+				title: truncateNotificationText(contact?.displayName || getEmailDisplayName(fromAddr), 80),
+				body: truncateNotificationText(parsed.subject || snippet || "New message"),
+				url: `/inbox/${messageId}`,
+				tag: messageId,
+			});
+		}
 	}
 	await dispatchWebhooks(env, decision.mailbox.userId, "message.inbound", {
 		messageId,

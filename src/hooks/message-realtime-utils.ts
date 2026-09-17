@@ -1,3 +1,4 @@
+import { isPushEnabledOnThisDevice } from "@/lib/push/client";
 import type { NewMessageEvent } from "./message-realtime-types";
 
 export const REALTIME_FALLBACK_INTERVAL_MS = 60_000;
@@ -42,7 +43,9 @@ export function showBrowserNewMessageNotification(event: NewMessageEvent): void 
 	if (
 		typeof Notification === "undefined" ||
 		Notification.permission !== "granted" ||
-		document.visibilityState === "visible"
+		document.visibilityState === "visible" ||
+		// The service worker already shows a push notification for this message.
+		isPushEnabledOnThisDevice()
 	) {
 		return;
 	}

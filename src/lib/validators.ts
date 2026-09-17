@@ -178,7 +178,8 @@ export const accountMailboxSchema = z.object({
 
 export const updateMailboxSchema = z.object({
 	displayName: z.string().max(100).nullable().optional(),
-	signature: z.string().max(10_000).nullable().optional(),
+	// HTML signatures carry inline styles and tables, so allow more room than plain text needed.
+	signature: z.string().max(100_000).nullable().optional(),
 	autoReplyEnabled: z.boolean().optional(),
 	autoReplySubject: z.string().trim().max(200).optional(),
 	autoReplyBody: z.string().max(10_000).optional(),

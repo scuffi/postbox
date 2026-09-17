@@ -147,13 +147,67 @@ function isSafeImageUrl(value: string): boolean {
 	}
 }
 
-function sanitizeStyle(element: HTMLElement): void {
+/**
+ * The style object lists shorthands as their longhands (`border-left` arrives as
+ * `border-left-width`, `-style` and `-color`), so a longhand of an allowed shorthand is
+ * allowed too. Without this, borders and `text-decoration: none` were silently dropped.
+ */
+function isAllowedStyleProperty(property: string): boolean {
+	if (ALLOWED_STYLE_PROPERTIES.has(property)) return true;
+	for (const allowed of ALLOWED_STYLE_PROPERTIES) {
+		if (property.startsWith(`${allowed}-`)) return true;
+	}
+	return false;
+}
+
+/** Splits a style attribute into declarations, ignoring semicolons inside parentheses or quotes. */
+function splitDeclarations(style: string): string[] {
+	const declarations: string[] = [];
+	let current = "";
+	let depth = 0;
+	let quote: string | null = null;
+	for (const char of style) {
+		if (quote) {
+			if (char === quote) quote = null;
+		} else if (char === "\"" || char === "'") {
+			quote = char;
+		} else if (char === "(") {
+			depth += 1;
+		} else if (char === ")") {
+			depth = Math.max(0, depth - 1);
+		} else if (char === ";" && depth === 0) {
+			declarations.push(current);
+			current = "";
+			continue;
+		}
+		current += char;
+	}
+	declarations.push(current);
+	return declarations;
+}
+
+/**
+ * Keeps allowed declarations as written, so `border-left: 2px solid red` stays one
+ * declaration instead of the dozen longhands the style object would expand it to.
+ * Escapes and comments are refused outright: they are how `u\72l(` slips past a
+ * pattern check, and legitimate mail has no need for them in inline styles.
+ */
+function sanitizeStyle(element: HTMLElement, options: SanitizeOptions): void {
 	const safeDeclarations: string[] = [];
-	for (const property of Array.from(element.style)) {
-		if (!ALLOWED_STYLE_PROPERTIES.has(property)) continue;
-		const value = element.style.getPropertyValue(property);
-		if (/url\s*\(|expression\s*\(|javascript:|@import|behavior\s*:|-moz-binding/i.test(value)) continue;
-		const safeValue = property === "font-family"
+	const probe = document.createElement("div").style;
+	for (const declaration of splitDeclarations(element.getAttribute("style") ?? "")) {
+		const separator = declaration.indexOf(":");
+		if (separator <= 0) continue;
+		const property = declaration.slice(0, separator).trim().toLowerCase();
+		const value = declaration.slice(separator + 1).trim().replace(/\s*!important\s*$/i, "");
+		if (!value || !isAllowedStyleProperty(property)) continue;
+		if (/[\\<>]|\/\*/.test(value)) continue;
+		if (/url\s*\(|expression\s*\(|javascript:|@import|behavior\s*:|-moz-binding|image-set\s*\(/i.test(value)) continue;
+		// Let the browser's own parser reject anything that is not valid CSS for the property.
+		probe.cssText = "";
+		probe.setProperty(property, value);
+		if (!probe.length) continue;
+		const safeValue = property === "font-family" && options.appFontFallback !== false
 			? `${value}, ${APP_FONT_FALLBACK}`
 			: value;
 		safeDeclarations.push(`${property}: ${safeValue}`);
@@ -165,7 +219,7 @@ function sanitizeStyle(element: HTMLElement): void {
 	}
 }
 
-function sanitizeElement(element: Element): void {
+function sanitizeElement(element: Element, options: SanitizeOptions): void {
 	const tag = element.tagName.toLowerCase();
 	if (!ALLOWED_TAGS.has(tag)) {
 		if (DROP_CONTENT_TAGS.has(tag)) {
@@ -182,7 +236,7 @@ function sanitizeElement(element: Element): void {
 		if (!allowed || name.startsWith("on")) element.removeAttribute(attribute.name);
 	}
 
-	if (element instanceof HTMLElement) sanitizeStyle(element);
+	if (element instanceof HTMLElement) sanitizeStyle(element, options);
 
 	if (tag === "a") {
 		const href = element.getAttribute("href");
@@ -205,11 +259,19 @@ function sanitizeElement(element: Element): void {
 	}
 }
 
-export function sanitizeEmailHtml(html: string | null): string | null {
+type SanitizeOptions = {
+	/**
+	 * Appends the app font to font-family so received mail reads in the UI's type. Off for
+	 * HTML that will be sent, like signatures, where recipients have no such font.
+	 */
+	appFontFallback?: boolean;
+};
+
+export function sanitizeEmailHtml(html: string | null, options: SanitizeOptions = {}): string | null {
 	if (!html) return null;
 	const document = new DOMParser().parseFromString(html, "text/html");
 	for (const element of Array.from(document.body.querySelectorAll("*"))) {
-		sanitizeElement(element);
+		sanitizeElement(element, options);
 	}
 	return document.body.innerHTML;
 }

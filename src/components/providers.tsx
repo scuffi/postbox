@@ -13,6 +13,7 @@ import { useMessagePolling } from "@/hooks/use-message-polling";
 import { clearMessageClientState } from "@/hooks/utils";
 import { clearMessageDetailCache } from "@/lib/messages/detail-cache";
 import { AUTH_SESSION_CHANGED_EVENT } from "@/lib/auth/client";
+import { registerServiceWorker } from "@/lib/push/client";
 
 export function Providers({ children }: { children: React.ReactNode }) {
 	const realtime = useMessagePolling();
@@ -30,6 +31,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 				},
 			}),
 	);
+
+	useEffect(() => {
+		// Keeps the push worker installed and current; it only acts on push events.
+		void registerServiceWorker();
+	}, []);
 
 	useEffect(() => {
 		function resetUserScopedState() {

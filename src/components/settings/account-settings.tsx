@@ -9,6 +9,7 @@ import { MfaSettings } from "./mfa-settings";
 import { ForwardingEmailForm } from "./forwarding-email-form";
 import { MailboxSignatureForm } from "./mailbox-signature-form";
 import { ProfileForm } from "./profile-form";
+import { PushNotificationSettings } from "./push-notification-settings";
 import { SettingsCard, SettingsSection } from "./settings-section";
 import { ThemeSegmented } from "@/components/theme-toggle";
 import type { AccountSettingsResponse } from "./types";
@@ -77,6 +78,12 @@ export function AccountSettings() {
 						</div>
 						<ThemeSegmented />
 					</div>
+				</SettingsCard>
+			</SettingsSection>
+
+			<SettingsSection title="Notifications" description="Alerts for new mail on this device. Turn them on separately on each phone or computer.">
+				<SettingsCard>
+					<PushNotificationSettings />
 				</SettingsCard>
 			</SettingsSection>
 

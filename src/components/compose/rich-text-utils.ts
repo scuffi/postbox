@@ -4,6 +4,8 @@
  * a single source of truth for what the message says.
  */
 
+import { sanitizeEmailHtml } from "@/app/(dashboard)/inbox/[messageId]/email-html-sanitizer";
+
 export const QUOTE_ATTRIBUTE = "data-mailflare-quote";
 const QUOTE_OPEN = `<div class="mailflare-quote" ${QUOTE_ATTRIBUTE}="1">`;
 const SIGNATURE_ATTRIBUTE = "data-mailflare-signature";
@@ -46,22 +48,52 @@ export function hasMeaningfulHtml(html: string): boolean {
 	return htmlToPlainText(html).trim().length > 0 || /<img\b/i.test(html);
 }
 
-function signatureBlock(signature: string | null | undefined): string {
-	const value = signature?.trim() ?? "";
-	return value ? `<div ${SIGNATURE_ATTRIBUTE}="1"><br><br>${textToHtml(value).replace(/^<div>|<\/div>$/g, "")}</div>` : "";
+/** Signatures saved before HTML signatures existed are plain text. */
+export function isHtmlSignature(signature: string | null | undefined): boolean {
+	return /<\/?[a-z][^>]*>/i.test(signature ?? "");
 }
 
-/** Swap or append the mailbox signature, mirroring the plain-text behaviour. */
+/** Leading comment where the signature designer keeps the fields it was built from. */
+export const SIGNATURE_DESIGN_COMMENT = /^\s*<!--postbox-signature-design:([A-Za-z0-9+/=]*)-->/;
+
+/** The signature as HTML that is safe to put into a message. */
+export function signatureToHtml(signature: string | null | undefined): string {
+	const value = signature?.trim() ?? "";
+	if (!value) return "";
+	if (!isHtmlSignature(value)) return textToHtml(value).replace(/^<div>|<\/div>$/g, "");
+	const withoutComments = value.replace(/<!--[\s\S]*?-->/g, "");
+	return typeof DOMParser === "undefined" ? "" : sanitizeEmailHtml(withoutComments, { appFontFallback: false }) ?? "";
+}
+
+function signatureBlock(signature: string | null | undefined): string {
+	const html = signatureToHtml(signature);
+	return html.trim() ? `<div ${SIGNATURE_ATTRIBUTE}="1"><br><br>${html}</div>` : "";
+}
+
+/**
+ * Swap or append the mailbox signature. The block is found by its marker rather than by
+ * string match, because the editor re-serialises HTML (attribute order, style spacing)
+ * and a rich signature would otherwise stop matching and get appended twice.
+ *
+ * With no previous signature this is the first pass over a body: a body that already
+ * carries a signature (a loaded draft, possibly edited) keeps it.
+ */
 export function applyMailboxSignatureHtml(
 	html: string,
 	previousSignature: string | null | undefined,
 	nextSignature: string | null | undefined,
 ): string {
-	const previousBlock = signatureBlock(previousSignature);
 	const nextBlock = signatureBlock(nextSignature);
-	if (previousBlock && html.includes(previousBlock)) return html.replace(previousBlock, nextBlock);
-	if (!nextBlock || html.includes(nextBlock)) return html;
-	return `${html}${nextBlock}`;
+	if (typeof DOMParser === "undefined") return html.includes(SIGNATURE_ATTRIBUTE) || !nextBlock ? html : `${html}${nextBlock}`;
+
+	const doc = new DOMParser().parseFromString(`<body>${html}</body>`, "text/html");
+	const existing = doc.body.querySelector(`[${SIGNATURE_ATTRIBUTE}]`);
+	if (!existing) return nextBlock ? `${html}${nextBlock}` : html;
+	if (!previousSignature?.trim() || previousSignature === nextSignature) return html;
+
+	if (nextBlock) existing.outerHTML = nextBlock;
+	else existing.remove();
+	return doc.body.innerHTML;
 }
 
 const BLOCK_TAGS = new Set(["p", "div", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote", "ul", "ol", "table"]);
