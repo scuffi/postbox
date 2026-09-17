@@ -27,7 +27,7 @@
   "cloudflare": {
     "bindings": {
       "CF_TOKEN": {
-        "description": "Runtime Cloudflare API token used by postbox onboarding to call the Zones and Email Routing APIs. Cloudflare's deploy/build token is not passed to the app, so create this separately at https://dash.cloudflare.com/profile/api-tokens with Account: Zone — Read, and Zone: Email Routing Rules — Edit for the zones you will connect. Add Account: Email Sending — Edit to enable outbound mail. Paste only the token secret value, without `Bearer`."
+        "description": "Runtime Cloudflare API token used by postbox onboarding to call the Zones and Email Routing APIs. Cloudflare's deploy/build token is not passed to the app, so create this separately at https://dash.cloudflare.com/profile/api-tokens with Zone: Email Routing Rules — Edit for the zones you will connect (this also lets postbox list your zones). Add Account: Email Sending — Edit to enable outbound mail. Paste only the token secret value, without `Bearer`."
       },
       "TURNSTILE_SECRET_KEY": {
         "description": "Cloudflare Turnstile secret key used to verify login and first-run registration challenges. Pair with NEXT_PUBLIC_TURNSTILE_SITE_KEY at build time."

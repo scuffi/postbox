@@ -39,8 +39,8 @@ If you use the button, Cloudflare's own git integration may also deploy on push 
 postbox needs one runtime value:
 
 - `CF_TOKEN` — a scoped Cloudflare API token, belonging to the same account as your domains, with:
-  - **Account:** Zone — Read; add **Email Sending — Edit** to send outbound mail.
   - **Zone (all zones you will connect):** Email Routing Rules — Edit.
+  - **Account:** Email Sending — Edit (only to send outbound mail).
 
 Set it as a Worker secret (it persists across deploys thanks to `keep_vars`):
 
