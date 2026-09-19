@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, like } from "drizzle-orm";
 import { getDb } from "@/db";
 import { contacts, routingRules } from "@/db/schema";
 import { getFirstEmailAddressEntry, normalizeEmailAddress } from "@/lib/email/address";
@@ -158,6 +158,37 @@ export async function blockContact(env: CloudflareEnv, input: BlockContactInput)
 	}
 
 	return { email, blocked: true };
+}
+
+export async function listBlockedContacts(env: CloudflareEnv, userId: string) {
+	return getDb(env)
+		.select()
+		.from(contacts)
+		.where(and(eq(contacts.userId, userId), eq(contacts.blocked, true)))
+		.orderBy(asc(contacts.email));
+}
+
+/** Reverses `blockContact`: clears the flag the spam engine reads and drops every mailbox's block rule for the sender. */
+export async function unblockContact(env: CloudflareEnv, userId: string, address: string) {
+	const email = normalizeEmailAddress(address);
+	if (!email) throw new Error("Contact email is required");
+
+	const db = getDb(env);
+	await db
+		.update(contacts)
+		.set({ blocked: false })
+		.where(and(eq(contacts.userId, userId), eq(contacts.email, email)));
+	await db
+		.delete(routingRules)
+		.where(
+			and(
+				eq(routingRules.userId, userId),
+				like(routingRules.id, "block:%"),
+				eq(routingRules.matchValue, email),
+			),
+		);
+
+	return { email, blocked: false };
 }
 
 function getNextDisplayName(existingName: string | null, source: string, nextName: string | null): string | null {

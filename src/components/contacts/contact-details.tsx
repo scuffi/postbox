@@ -19,6 +19,7 @@ import {
 	fetchContactDetails,
 	updateContactName,
 } from "./contact-details-utils";
+import { unblockContactRequest } from "@/components/settings/blocked-contacts-utils";
 
 export function ContactDetailsTrigger({
 	mailboxId,
@@ -32,6 +33,7 @@ export function ContactDetailsTrigger({
 	const [displayName, setDisplayName] = useState(name);
 	const [loading, setLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [unblocking, setUnblocking] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -77,6 +79,20 @@ export function ContactDetailsTrigger({
 			setError(saveError instanceof Error ? saveError.message : "Unable to update contact");
 		} finally {
 			setSaving(false);
+		}
+	}
+
+	async function unblockContact() {
+		if (!mailboxId || !contact) return;
+		setUnblocking(true);
+		setError(null);
+		try {
+			await unblockContactRequest(contact.email, mailboxId);
+			setContact({ ...contact, blocked: false });
+		} catch (unblockError) {
+			setError(unblockError instanceof Error ? unblockError.message : "Unable to unblock contact");
+		} finally {
+			setUnblocking(false);
 		}
 	}
 
@@ -136,7 +152,12 @@ export function ContactDetailsTrigger({
 								</p>
 							</div>
 							{contact?.blocked && (
-								<p className="text-sm font-medium text-destructive">Blocked contact</p>
+								<div className="flex items-center justify-between gap-3 sm:col-span-2">
+									<p className="text-sm font-medium text-destructive">Blocked contact</p>
+									<Button type="button" variant="secondary" size="sm" disabled={unblocking} onClick={() => void unblockContact()}>
+										{unblocking ? "Unblocking…" : "Unblock"}
+									</Button>
+								</div>
 							)}
 						</div>
 						{error && <p className="text-sm text-destructive">{error}</p>}
